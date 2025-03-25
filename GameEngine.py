@@ -4,10 +4,12 @@ import random
 from constants import *
 from Entity import Pacman, Ghost, Maze
 from EntityFactory import Factory
+from Menu import Menu
 
 
 
 class Game:
+
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -46,6 +48,8 @@ class Game:
     def run(self):
         running = True
         while running:
+            menu = Menu(self.window)
+            menu.run()
             self.screen.fill(BLACK)
             self.maze.draw(self.screen)
             
