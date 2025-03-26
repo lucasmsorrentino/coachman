@@ -12,6 +12,7 @@ class Menu:
 
     def run(self, ):
         menu_option = 0
+        pygame.mixer.init()
         pygame.mixer.music.load('./asset/videoplayback_audio.wav')
         pygame.mixer.music.play(-1)
         while True:
@@ -44,7 +45,6 @@ class Menu:
                             menu_option = len(MENU_OPTION) - 1
                     elif event.key == pygame.K_RETURN:
                         if menu_option == 0:
-                            pygame.mixer.music.stop()
                             return MENU_OPTION[menu_option]
                       
               

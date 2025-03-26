@@ -11,10 +11,10 @@ from Menu import Menu
 class Game:
 
     def __init__(self):
+        
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
-        pygame.mixer.init()
-        pygame.display.set_caption("Pac-Man Refactored")
+        pygame.display.set_caption("Coach-Man")
         self.clock = pygame.time.Clock()
         self.maze = Maze()
         self.entity_factory = Factory(self.maze)
@@ -51,6 +51,7 @@ class Game:
         pygame.time.delay(2000)
 
     def run(self):
+        pygame.mixer.init()
         running = True
         while running:
             menu = Menu(self.screen)
