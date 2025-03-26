@@ -14,12 +14,15 @@ class Entity:
         self.direction = random.choice([(0, -1), (0, 1), (-1, 0), (1, 0)])
 
 
-class Pacman:
+class Coachman:
     def __init__(self, maze, position):
         self.maze = maze
         self.position = position
         self.score = 0
         self.lives = 3
+        self.direction = "Down"
+        self.current_frame = 0
+        self.frame_timer = 0.0
         self.maze.grid[self.position[0]][self.position[1]] = 4
 
     def move(self, direction):
@@ -42,6 +45,10 @@ class Pacman:
             
             self.maze.update_position((row, col), (new_row, new_col), 4)
             self.position = [new_row, new_col]
+            # Match asset filename spelling exactly ("Righ" instead of "Right")
+            self.direction = "Righ" if direction.upper() == "RIGHT" else direction.capitalize()
+            # Advance animation frame
+            self.current_frame = (self.current_frame + 1) % COACHMAN_FRAMES_PER_DIR
             
     def reset_position(self):
         self.position = self.maze.find_initial_pos(4)
@@ -88,6 +95,31 @@ class Maze:
             for c, val in enumerate(row) if val == 2
         }
         self.grid = [row[:] for row in INITIAL_GRID]
+        self.coachman_sprites = {}
+        self.coachman = None
+
+    def reset(self):
+        """Reset maze to initial state while preserving sprites and coachman reference"""
+        self.pellets = {
+            (r, c) for r, row in enumerate(INITIAL_GRID)
+            for c, val in enumerate(row) if val == 2
+        }
+        self.grid = [row[:] for row in INITIAL_GRID]
+
+    def load_coachman_sprites(self):
+        self.coachman_sprites = {
+            dir: [
+                pygame.image.load(f"asset/coachMan{dir}0{i}.png") 
+                for i in range(1,4)
+            ]
+            for dir in ["Up", "Down", "Left", "Righ"]  # Fixed typo to match asset filenames
+        }
+        # Scale all sprites to GRID_SIZE
+        for dir in self.coachman_sprites:
+            self.coachman_sprites[dir] = [
+                pygame.transform.scale(img, (GRID_SIZE, GRID_SIZE))
+                for img in self.coachman_sprites[dir]
+            ]
 
     def __getitem__(self, idx):
         return self.grid[idx[0]][idx[1]]
@@ -112,7 +144,10 @@ class Maze:
             1: lambda x,y: pygame.draw.rect(screen, BLUE, (x, y, GRID_SIZE, GRID_SIZE)),
             2: lambda x,y: pygame.draw.circle(screen, WHITE, (x + GRID_SIZE//2, y + GRID_SIZE//2), 5),
             3: lambda x,y: pygame.draw.circle(screen, RED, (x + GRID_SIZE//2, y + GRID_SIZE//2), 12),
-            4: lambda x,y: pygame.draw.circle(screen, YELLOW, (x + GRID_SIZE//2, y + GRID_SIZE//2), 12)
+            4: lambda x,y: screen.blit(
+                self.coachman_sprites[self.coachman.direction][self.coachman.current_frame],
+                (x, y)
+            )
         }
         
         for r, row in enumerate(self.grid):

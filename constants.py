@@ -13,6 +13,10 @@ YELLOW = (255, 255, 0)  # Color for Pac-Manr
 RED = (255, 0, 0)  # Color for ghosts
 BLUE = (0, 0, 255)  # Color for walls
 
+# Animation settings
+ANIMATION_FRAME_DURATION = 0.1  # Seconds per frame
+COACHMAN_FRAMES_PER_DIR = 3     # Frames per movement direction
+
 
 INITIAL_GRID = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -48,6 +52,6 @@ INITIAL_GRID = [
 ]
 
 
-MENU_OPTION = ('Play',
-               'Score',
-               'Exit')
+MENU_OPTION = ('>Play<',
+               '>Score<',
+               '>Exit<')
