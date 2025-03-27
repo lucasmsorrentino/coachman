@@ -23,7 +23,7 @@ class Coachman:
         self.position = position
         self.score = 0
         self.lives = 3
-        self.direction = "Down"
+        self.direction = "Right"
         self.current_frame = 0
         self.frame_timer = 0.0
         self.maze.grid[self.position[0]][self.position[1]] = 4
@@ -48,8 +48,8 @@ class Coachman:
             
             self.maze.update_position((row, col), (new_row, new_col), 4)
             self.position = [new_row, new_col]
-            # Match asset filename spelling exactly ("Righ" instead of "Right")
-            self.direction = "Righ" if direction.upper() == "RIGHT" else direction.capitalize()
+           
+            self.direction = "Right" if direction.upper() == "RIGHT" else direction.capitalize()
             # Advance animation frame
             self.current_frame = (self.current_frame + 1) % COACHMAN_FRAMES_PER_DIR
             
@@ -149,7 +149,7 @@ class Maze:
         
     def load_coachman_sprites(self):    
         # We assume the assets already exist in the "asset" folder.
-        # Keys: "Down", "Righ", "Left", "Up". Using "Righ" for the right direction.
+        # Keys: "Down", "Right", "Left", "Up". Using "Righ" for the right direction.
         directions = ["Down", "Right", "Left", "Up"]
         self.coachman_sprites = {}
         
