@@ -2,8 +2,11 @@
 from dataclasses import dataclass
 from typing import List, Set, Tuple
 import pygame
+import os
 import random
 from constants import *
+
+
 
 
 
@@ -58,29 +61,48 @@ class Ghost:
     def __init__(self, maze, position):
         self.maze = maze
         self.position = position
+        # Choose a ghost type randomly from the available types
+        self.type = random.choice(["BLINKY", "PINKY", "INKY", "CLYDE"])
         self.directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
         self.maze.grid[self.position[0]][self.position[1]] = 3
+        # Animation attributes for ghost (8 frames)
+        self.current_frame = 0
+        self.frame_timer = 0.0
 
     def move(self):
         row, col = self.position
         random.shuffle(self.directions)
-        
         for dr, dc in self.directions:
             new_row, new_col = row + dr, col + dc
-            
             if self.maze.is_valid_move(new_row, new_col):
                 self.maze.update_position((row, col), (new_row, new_col), 3)
                 self.position = [new_row, new_col]
                 break
-                
+
     def reset_position(self):
         self.position = self.maze.find_initial_pos(3)
         self.maze.grid[self.position[0]][self.position[1]] = 3
 
+    def update_animation(self):
+        current_time = pygame.time.get_ticks()
+        delta_time = (current_time - self.frame_timer) / 1000.0
+        if delta_time >= ANIMATION_FRAME_DURATION:
+            # Advance frame modulo 8 frames
+            self.current_frame = (self.current_frame + 1) % 8
+            self.frame_timer = current_time
+
+    def draw(self, screen):
+        # Get the correct sprite frames for this ghost type from the maze
+        ghost_frames = self.maze.ghost_sprites[self.type]
+        # Draw the current frame at the ghost's position
+        x = self.position[1] * GRID_SIZE
+        y = self.position[0] * GRID_SIZE
+        screen.blit(ghost_frames[self.current_frame], (x, y))
 
 
 @dataclass
 class Maze:
+
     def all_pellets_collected(self):
         return len(self.pellets) == 0
 
@@ -97,6 +119,7 @@ class Maze:
         self.grid = [row[:] for row in INITIAL_GRID]
         self.coachman_sprites = {}
         self.coachman = None
+        self.ghost_sprites = []  # New attribute for ghost assets
 
     def reset(self):
         """Reset maze to initial state while preserving sprites and coachman reference"""
@@ -105,21 +128,45 @@ class Maze:
             for c, val in enumerate(row) if val == 2
         }
         self.grid = [row[:] for row in INITIAL_GRID]
+        
 
-    def load_coachman_sprites(self):
-        self.coachman_sprites = {
-            dir: [
-                pygame.image.load(f"asset/coachMan{dir}0{i}.png") 
-                for i in range(1,4)
-            ]
-            for dir in ["Up", "Down", "Left", "Righ"]  # Fixed typo to match asset filenames
-        }
-        # Scale all sprites to GRID_SIZE
-        for dir in self.coachman_sprites:
-            self.coachman_sprites[dir] = [
-                pygame.transform.scale(img, (GRID_SIZE, GRID_SIZE))
-                for img in self.coachman_sprites[dir]
-            ]
+
+    def load_ghost_sprites(self):
+        # Load ghost sprites for each ghost type and store them in a dictionary.
+        ghost_types = ["BLINKY", "PINKY", "INKY", "CLYDE"]
+        self.ghost_sprites = {}
+       
+        for ghost in ghost_types:
+            frames = []
+            for i in range(1, 9):
+                filename = f"./asset/{ghost}{i:02d}.png"
+                img = pygame.image.load(filename)
+                # Scale the image to GRID_SIZE
+                
+                frames.append(img)
+            self.ghost_sprites[ghost] = frames
+
+        
+    def load_coachman_sprites(self):    
+        # We assume the assets already exist in the "asset" folder.
+        # Keys: "Down", "Righ", "Left", "Up". Using "Righ" for the right direction.
+        directions = ["Down", "Right", "Left", "Up"]
+        self.coachman_sprites = {}
+        
+        for d in directions:
+            frames = []
+            for i in range(1, 4):  # 3 frames per direction
+                filename = f"./asset/coachMan{d}0{i}.png"
+                img = pygame.image.load(filename)
+                
+                frames.append(img)
+            self.coachman_sprites[d] = frames
+     
+
+
+
+       
+    
 
     def __getitem__(self, idx):
         return self.grid[idx[0]][idx[1]]
@@ -141,19 +188,19 @@ class Maze:
 
     def draw(self, screen):
         draw_map = {
-            1: lambda x,y: pygame.draw.rect(screen, BLUE, (x, y, GRID_SIZE, GRID_SIZE)),
-            2: lambda x,y: pygame.draw.circle(screen, WHITE, (x + GRID_SIZE//2, y + GRID_SIZE//2), 5),
-            3: lambda x,y: pygame.draw.circle(screen, RED, (x + GRID_SIZE//2, y + GRID_SIZE//2), 12),
-            4: lambda x,y: screen.blit(
+            1: lambda x, y: pygame.draw.rect(screen, BLUE, (x, y, GRID_SIZE, GRID_SIZE)),
+            2: lambda x, y: pygame.draw.circle(screen, WHITE, (x + GRID_SIZE // 2, y + GRID_SIZE // 2), 5),
+            4: lambda x, y: screen.blit(
                 self.coachman_sprites[self.coachman.direction][self.coachman.current_frame],
                 (x, y)
             )
         }
-        
+    
         for r, row in enumerate(self.grid):
             for c, val in enumerate(row):
                 if val in draw_map:
                     draw_map[val](c * GRID_SIZE, r * GRID_SIZE)
+    
 
     def update_position(self, old_pos, new_pos, entity_type):
         old_r, old_c = old_pos

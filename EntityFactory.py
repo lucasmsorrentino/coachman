@@ -1,8 +1,7 @@
 import pygame
 import random
 from constants import *
-from GameEngine import Coachman, Ghost
-
+from Entity import Coachman, Ghost
 
 class Factory:
     def __init__(self, maze):
@@ -15,3 +14,4 @@ class Factory:
     def create_ghost(self):
         pos = self.maze.find_initial_pos(3)
         return Ghost(self.maze, pos)
+

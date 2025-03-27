@@ -1,6 +1,6 @@
 
-
 # Constants
+
 WIDTH, HEIGHT = 900, 900  # The dimensions of the game window
 GRID_SIZE = 30  # Each cell in the grid is 30x30 pixels
 ROWS, COLS = 30, 30  # Number of rows and columns in the grid
@@ -50,6 +50,7 @@ INITIAL_GRID = [
     [1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ]
+
 
 
 MENU_OPTION = ('>Play<',
