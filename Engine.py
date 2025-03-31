@@ -18,11 +18,14 @@ class Engine:
         self.maze.load_ghost_sprites()
         self.entity_factory = Factory(self.maze)
         self.coachman = self.entity_factory.create_coachman()
-        self.ghosts = [self.entity_factory.create_ghost() for _ in range(3)]
+       # self.ghosts = [self.entity_factory.create_ghost() for _ in range(3)]
+        # Create 4 ghosts with distinct spawn positions and types
+        self.ghosts = self.entity_factory.create_ghosts(4)
         # Link the coachman to the maze (used for drawing)
         self.maze.coachman = self.coachman
         # Set up initial game state
         self.coachman.lives = 3
+        self.frame_counter = 0
 
 
     def handle_events(self):
@@ -42,6 +45,9 @@ class Engine:
     def render(self):
         self.screen.fill(BLACK)
         self.maze.draw(self.screen)
+        # Draw each ghost on top of the maze
+        for ghost in self.ghosts:
+            ghost.draw(self.screen)
         
         # Display score and lives
         font = pygame.font.Font(None, 36)
@@ -49,8 +55,9 @@ class Engine:
         lives_text = font.render(f"Lives: {self.coachman.lives}", True, WHITE)
         self.screen.blit(score_text, (10, 10))
         self.screen.blit(lives_text, (WIDTH-100, 10))
-        
+    
         pygame.display.flip()
+
 
     def run_game_loop(self):
         self.running = True
@@ -80,6 +87,7 @@ class Engine:
                 if self.coachman.lives > 0:
                     self.display_message("You lost a life!", RED)
                     self.reset_coachman()
+                    self.reset_ghosts()
                 else:
                     self.display_message("Game Over!", RED)
                     return "GAME_OVER"
@@ -87,23 +95,31 @@ class Engine:
     def reset_coachman(self):
         self.coachman.reset_position()
 
+    def reset_ghosts(self):
+        for ghost in self.ghosts:
+            ghost.reset_position()
+
 
     def update(self):
-        for ghost in self.ghosts:
-            ghost.move()
-            ghost.update_animation()
-    
-        # Check collisions, update coachman animation, etc.
-        game_state = self.check_collision()
-        if game_state == "GAME_OVER":
-            return False
-        
-        # (Your existing coachman update logic remains)
-        current_time = pygame.time.get_ticks()
-        delta_time = (current_time - self.coachman.frame_timer) / 1000.0
-        if delta_time >= ANIMATION_FRAME_DURATION:
-            self.coachman.current_frame = (self.coachman.current_frame + 1) % COACHMAN_FRAMES_PER_DIR
-            self.coachman.frame_timer = current_time
+        # Update ghost movement (no time-based animation call)
+        if self.frame_counter % 5 == 0:
+            for ghost in self.ghosts:
+                ghost.move()
+            
 
-            return True
+        # Check for collisions; if game over, stop updating
+        if self.check_collision() == "GAME_OVER":
+            return False
+
+        # Use the frame counter to update animations.
+        # Assuming 60 FPS, updating every 6 frames is roughly equivalent to 0.1 seconds.
+        if self.frame_counter % 6 == 0:
+            # Update Coachman's animation frame
+            self.coachman.current_frame = (self.coachman.current_frame + 1) % COACHMAN_FRAMES_PER_DIR
+            # Update each Ghost's animation frame (assuming 8 frames for ghosts)
+            for ghost in self.ghosts:
+                ghost.current_frame = (ghost.current_frame + 1) % 8
+
+        self.frame_counter += 1
+        return True
 

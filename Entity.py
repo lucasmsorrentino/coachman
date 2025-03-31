@@ -5,6 +5,7 @@ import pygame
 import os
 import random
 from constants import *
+import heapq
 
 
 
@@ -25,7 +26,6 @@ class Coachman:
         self.lives = 3
         self.direction = "Right"
         self.current_frame = 0
-        self.frame_timer = 0.0
         self.maze.grid[self.position[0]][self.position[1]] = 4
 
     def move(self, direction):
@@ -60,36 +60,93 @@ class Coachman:
 class Ghost:
     def __init__(self, maze, position):
         self.maze = maze
-        self.position = position
-        # Choose a ghost type randomly from the available types
+        self.position = list(position)  # Ensure it's mutable
+        self.initial_position = list(position)  # Store this unique spawn position
+        # Optionally assign type here or via factory:
         self.type = random.choice(["BLINKY", "PINKY", "INKY", "CLYDE"])
         self.directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
         self.maze.grid[self.position[0]][self.position[1]] = 3
         # Animation attributes for ghost (8 frames)
         self.current_frame = 0
-        self.frame_timer = 0.0
 
     def move(self):
-        row, col = self.position
-        random.shuffle(self.directions)
-        for dr, dc in self.directions:
-            new_row, new_col = row + dr, col + dc
-            if self.maze.is_valid_move(new_row, new_col):
-                self.maze.update_position((row, col), (new_row, new_col), 3)
-                self.position = [new_row, new_col]
-                break
+        # Convert positions to tuples to ensure consistency.
+        start = tuple(self.position)
+        target = tuple(self.maze.coachman.position)  # Assume coachman is linked to the maze
+
+        # Try to compute a path using A*
+        path = self.astar(start, target, self.maze.grid)
+        
+        if path and len(path) > 1:
+            # The next step in the path (path[0] is the current position)
+            next_step = path[1]
+            self.maze.update_position(start, next_step, 3)
+            self.position = list(next_step)
+        else:
+            # Fallback: if no path is found, move randomly.
+            row, col = self.position
+            random.shuffle(self.directions)
+            for dr, dc in self.directions:
+                new_row, new_col = row + dr, col + dc
+                if self.maze.is_valid_move(new_row, new_col):
+                    self.maze.update_position((row, col), (new_row, new_col), 3)
+                    self.position = [new_row, new_col]
+                    break
+
+    def astar(self, start, goal, grid):
+        
+        # Define the Manhattan distance heuristic.
+        def heuristic(a, b):
+            return abs(a[0] - b[0]) + abs(a[1] - b[1])
+            
+        # The four possible movement directions (up, down, left, right)
+        neighbors = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+            
+        open_set = []
+        heapq.heappush(open_set, (0, start))
+        came_from = {}
+        g_score = {start: 0}
+
+        while open_set:
+            current_f, current = heapq.heappop(open_set)
+            if current == goal:
+                # Reconstruct the path from start to goal.
+                path = [current]
+                while current in came_from:
+                    current = came_from[current]
+                    path.append(current)
+                path.reverse()
+                return path
+
+            for dx, dy in neighbors:
+                neighbor = (current[0] + dx, current[1] + dy)
+                # Check if neighbor is within grid bounds (using ROWS and COLS from constants)
+                if not (0 <= neighbor[0] < ROWS and 0 <= neighbor[1] < COLS):
+                    continue
+                # Only consider cells that are not walls (wall cells are represented by 1)
+                if grid[neighbor[0]][neighbor[1]] == 1:
+                    continue
+                tentative_g = g_score[current] + 1
+                if neighbor not in g_score or tentative_g < g_score[neighbor]:
+                    g_score[neighbor] = tentative_g
+                    f = tentative_g + heuristic(neighbor, goal)
+                    heapq.heappush(open_set, (f, neighbor))
+                    came_from[neighbor] = current
+
+        # Return None if no path is found.
+        return None
 
     def reset_position(self):
-        self.position = self.maze.find_initial_pos(3)
+        self.position = list(self.initial_position)
         self.maze.grid[self.position[0]][self.position[1]] = 3
 
-    def update_animation(self):
+    '''def update_animation(self):
         current_time = pygame.time.get_ticks()
         delta_time = (current_time - self.frame_timer) / 1000.0
         if delta_time >= ANIMATION_FRAME_DURATION:
             # Advance frame modulo 8 frames
             self.current_frame = (self.current_frame + 1) % 8
-            self.frame_timer = current_time
+            self.frame_timer = current_time'''
 
     def draw(self, screen):
         # Get the correct sprite frames for this ghost type from the maze
@@ -179,12 +236,26 @@ class Maze:
             self.pellets.add((r, c))
         self.grid[r][c] = value
 
+    #def find_initial_pos(self, entity_type):
+     #   return next(
+      #      ((r, c) for r, row in enumerate(self.grid)
+       #      for c, val in enumerate(row) if val == entity_type),
+        #    (1, 1)  # default
+        #)
+    def find_all_initial_pos(self, entity_type):
+        return [
+            (r, c) for r, row in enumerate(self.grid)
+            for c, val in enumerate(row) if val == entity_type
+        ]
     def find_initial_pos(self, entity_type):
-        return next(
-            ((r, c) for r, row in enumerate(self.grid)
-             for c, val in enumerate(row) if val == entity_type),
-            (1, 1)  # default
-        )
+        positions = [
+            (r, c) for r, row in enumerate(self.grid)
+            for c, val in enumerate(row) if val == entity_type
+        ]
+        if positions:
+            return random.choice(positions)
+        else:
+            return (1, 1)  # default if none found
 
     def draw(self, screen):
         draw_map = {
