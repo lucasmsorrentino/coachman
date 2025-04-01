@@ -67,14 +67,13 @@ class Engine:
 
         while self.running:
             self.render()
-            self.handle_events()
             self.clock.tick(60)
-            if self.check_collision() == "GAME_OVER":
-                self.running = False
-                break  # Exit the loop on game over
+            self.handle_events()
             self.update()
-
-        return self.coachman.score
+            
+        final_score = self.coachman.score
+     
+        return final_score 
 
     def display_message(self, message, color=WHITE):
         font = pygame.font.Font(None, 50)
@@ -96,16 +95,12 @@ class Engine:
                     self.reset_ghosts()
                 else:
                      #insert the score using the score_db module.
-                    self.display_game_over()
-                    self.display_message("Game Over!", RED)
-                    scores = get_high_scores()
-                    for score in scores:
-                        if score < self.coachman.score:
-                            insert_score(Game.get_player_initials(), self.coachman.score)
-                            
-                            break
+
+                    self.display_message(f"Final Score: {self.coachman.score}\n Game Over!", RED)
                     
-                    return "GAME_OVER", self.coachman.score
+                    self.display_game_over()
+
+                    return "GAME_OVER"
                 
     def display_game_over(self):
         # Load and scale the game over image (ensure you have this image in the asset folder)

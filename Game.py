@@ -28,13 +28,14 @@ class Game:
                 return
             elif menu_return == MENU_OPTION[0]:  # Play
                 engine = Engine()
-                # final_score = engine.run_game_loop()
-                
-                # # Get player initials
-                # player_initials = self.get_player_initials(final_score)
-                # if player_initials:
+                final_score = engine.run_game_loop()
+                scores = get_high_scores()
+                if not scores or final_score > scores[-1][1]:  # Compare against lowest high score
+                    initials = self.get_player_initials(final_score)
+                    if initials:  # Only save if player entered initials
+                        insert_score(initials, final_score)
+                self.display_scores()
               
-                #     insert_score(player_initials, final_score)
 
     def get_player_initials(self, score):
         """Capture 3-letter player input using pygame"""
