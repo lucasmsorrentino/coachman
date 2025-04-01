@@ -2,7 +2,6 @@
 from dataclasses import dataclass
 from typing import List, Set, Tuple
 import pygame
-import os
 import random
 from constants import *
 import heapq

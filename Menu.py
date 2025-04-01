@@ -1,6 +1,6 @@
 
 import pygame
-import Game
+from score_db import get_high_scores
 from constants import *
 
 
@@ -45,14 +45,13 @@ class Menu:
                             menu_option -= 1
                         else:
                             menu_option = len(MENU_OPTION) - 1
-                    elif event.key == pygame.K_RETURN:
-                        if menu_option == 0:
-                            return MENU_OPTION[menu_option]
-                      
-              
+                    elif event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
+                        return MENU_OPTION[menu_option]
+                                
 
     def menu_text(self, text_size: int, text_color: tuple, text_position: tuple, text: str):
         font = pygame.font.SysFont("helvetica", text_size)
         text_surface = font.render(text, True, text_color)
         text_rect = text_surface.get_rect(center=text_position)
         self.screen.blit(text_surface, text_rect)
+

@@ -3,6 +3,7 @@ from constants import *
 from Entity import *
 from EntityFactory import *
 from Game import *
+from score_db import get_high_scores, insert_score
 
 
 class Engine:
@@ -49,7 +50,7 @@ class Engine:
         for ghost in self.ghosts:
             ghost.draw(self.screen)
         
-        # Display score and lives
+        # Display lives
         font = pygame.font.Font(None, 36)
         score_text = font.render(f"Score: {self.coachman.score}", True, WHITE)
         lives_text = font.render(f"Lives: {self.coachman.lives}", True, WHITE)
@@ -66,9 +67,14 @@ class Engine:
 
         while self.running:
             self.render()
-            self.clock.tick(60)
             self.handle_events()
+            self.clock.tick(60)
+            if self.check_collision() == "GAME_OVER":
+                self.running = False
+                break  # Exit the loop on game over
             self.update()
+
+        return self.coachman.score
 
     def display_message(self, message, color=WHITE):
         font = pygame.font.Font(None, 50)
@@ -89,8 +95,25 @@ class Engine:
                     self.reset_coachman()
                     self.reset_ghosts()
                 else:
+                     #insert the score using the score_db module.
+                    self.display_game_over()
                     self.display_message("Game Over!", RED)
-                    return "GAME_OVER"
+                    scores = get_high_scores()
+                    for score in scores:
+                        if score < self.coachman.score:
+                            insert_score(Game.get_player_initials(), self.coachman.score)
+                            
+                            break
+                    
+                    return "GAME_OVER", self.coachman.score
+                
+    def display_game_over(self):
+        # Load and scale the game over image (ensure you have this image in the asset folder)
+        game_over_image = pygame.image.load('./asset/pablo-marcal-ambulancia.jpg')
+        game_over_image = pygame.transform.scale(game_over_image, (WIDTH, HEIGHT))
+        self.screen.blit(game_over_image, (0, 0))
+        pygame.display.flip()
+        pygame.time.delay(4000)  # delay for 5000 milliseconds (5 seconds)
 
     def reset_coachman(self):
         self.coachman.reset_position()
@@ -101,15 +124,16 @@ class Engine:
 
 
     def update(self):
-        # Update ghost movement (no time-based animation call)
+        # Update ghost movement 
         if self.frame_counter % 5 == 0:
             for ghost in self.ghosts:
                 ghost.move()
             
 
-        # Check for collisions; if game over, stop updating
+        # Check for collisions; if game over, stop updating by breaking out of the game loop
         if self.check_collision() == "GAME_OVER":
-            return False
+            self.running = False
+            return 
 
         # Use the frame counter to update animations.
         # Assuming 60 FPS, updating every 6 frames is roughly equivalent to 0.1 seconds.
