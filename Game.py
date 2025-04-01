@@ -79,8 +79,10 @@ class Game:
 
     def display_scores(self):
         high_scores = get_high_scores()
+        pygame.mixer.music.load('./asset/audio_cortado.wav')
+        pygame.mixer.music.play(-1)
 
-        self.screen.fill((0, 0, 0))
+        self.screen.fill(BLACK)
         font = pygame.font.Font(None, 36)
         
         title = font.render("High Scores", True, (255, 255, 0))

@@ -8,8 +8,15 @@ class Menu:
 
     def __init__(self, screen):
         self.screen = screen
+        
         self.surf = pygame.image.load('./asset/marcalHead.png')
-        self.rect = self.surf.get_rect(left=0, top=HEIGHT/5.5)
+        
+        coach_size = self.surf.get_size()
+
+        # Set the display mode to match the asset background size
+        screen = pygame.display.set_mode(coach_size)
+
+        self.rect = self.surf.get_rect(left=0, top=0)
 
 
     def run(self, ):
@@ -18,9 +25,12 @@ class Menu:
         pygame.mixer.music.load('./asset/videoplayback_audio.wav')
         pygame.mixer.music.play(-1)
         while True:
+                # Clear the screen before drawing the menu
+            self.screen.fill(BLACK)
+                # Draw the header image and menu title
             self.screen.blit(source=self.surf, dest=self.rect)
-            self.menu_text(90, (YELLOW), (WIDTH/2, HEIGHT/10), "Coach-Man")
-
+            self.menu_text(70, (YELLOW), (WIDTH/3, HEIGHT/10), "Coach-Man")
+                # Draw each menu option
             for i in range(len(MENU_OPTION)):
                 if i == menu_option:
                     self.menu_text(50, (YELLOW), (WIDTH/9, HEIGHT/2.8 + 60 * i), MENU_OPTION[i])
