@@ -30,7 +30,7 @@ class Game:
                 engine = Engine()
                 final_score = engine.run_game_loop()
                 scores = get_high_scores()
-                if not scores or final_score > scores[-1][1]:  # Compare against lowest high score
+                if len(scores) < 10 or final_score > scores[-1]:  # Compare against lowest high score
                     initials = self.get_player_initials(final_score)
                     if initials:  # Only save if player entered initials
                         insert_score(initials, final_score)
@@ -83,7 +83,7 @@ class Game:
         pygame.mixer.music.play(-1)
 
         self.screen.fill(BLACK)
-        font = pygame.font.Font(None, 36)
+        font = pygame.font.Font('./asset/PressStart2P-Regular.ttf', 33)
         
         title = font.render("High Scores", True, (255, 255, 0))
         self.screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 50))
@@ -94,7 +94,7 @@ class Game:
             self.screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, y))
             y += 40
 
-        prompt = font.render("Press any key to return to the menu", True, (255, 255, 255))
+        prompt = font.render("Press any key to return to the menu", 25, True, (255, 255, 255))
         self.screen.blit(prompt, (WIDTH // 2 - prompt.get_width() // 2, HEIGHT - 100))
         
         pygame.display.flip()

@@ -76,10 +76,21 @@ class Engine:
         return final_score 
 
     def display_message(self, message, color=WHITE):
-        font = pygame.font.Font(None, 50)
-        text = font.render(message, True, color)
-        text_rect = text.get_rect(center=(WIDTH//2, HEIGHT//2))
-        self.screen.blit(text, text_rect)
+        font = pygame.font.Font('./asset/PressStart2P-Regular.ttf', 50)
+        # Split the message into lines
+        lines = message.split('\n')
+        # Calculate starting y position (for example, centering vertically)
+        total_height = len(lines) * font.get_linesize()
+        y_offset = (HEIGHT - total_height) // 2
+        
+        
+        for line in lines:
+            text = font.render(line, True, color)
+            text_rect = text.get_rect(center=(WIDTH//2, y_offset))
+            self.screen.blit(text, text_rect)
+            y_offset += font.get_linesize()
+
+
         pygame.display.flip()
         pygame.time.delay(2000)
 

@@ -1,4 +1,3 @@
-import pygame
 import random
 from constants import *
 from Entity import Coachman, Ghost

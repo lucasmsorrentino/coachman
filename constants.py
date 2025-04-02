@@ -53,6 +53,6 @@ INITIAL_GRID = [
 
 
 
-MENU_OPTION = ('Play - Murro no fucinho',
-               'Score - Desbloquei a Properidade',
-               'Exit - Vc não homem nem pra isso')
+MENU_OPTION = ('>Play<\n Murro no fucin',
+               '>Score<\n Prosperidade Desbloqueada',
+               '>Exit<\n Vc não é homi pa isso')

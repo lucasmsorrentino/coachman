@@ -147,14 +147,21 @@ class Ghost:
             self.current_frame = (self.current_frame + 1) % 8
             self.frame_timer = current_time'''
 
+    # def draw(self, screen):
+    #     # Get the correct sprite frames for this ghost type from the maze
+    #     ghost_frames = self.maze.ghost_sprites[self.type]
+    #     # Draw the current frame at the ghost's position
+    #     x = self.position[1] * GRID_SIZE
+    #     y = self.position[0] * GRID_SIZE
+    #     screen.blit(ghost_frames[self.current_frame], (x, y))
     def draw(self, screen):
-        # Get the correct sprite frames for this ghost type from the maze
         ghost_frames = self.maze.ghost_sprites[self.type]
-        # Draw the current frame at the ghost's position
+        sprite = ghost_frames[self.current_frame]
         x = self.position[1] * GRID_SIZE
         y = self.position[0] * GRID_SIZE
-        screen.blit(ghost_frames[self.current_frame], (x, y))
-
+        # Center the ghost sprite in the cell
+        sprite_rect = sprite.get_rect(center=(x + GRID_SIZE // 2, y + GRID_SIZE // 2))
+        screen.blit(sprite, sprite_rect)
 
 @dataclass
 class Maze:
@@ -191,6 +198,8 @@ class Maze:
         # Load ghost sprites for each ghost type and store them in a dictionary.
         ghost_types = ["BLINKY", "PINKY", "INKY", "CLYDE"]
         self.ghost_sprites = {}
+        scale_factor = 1.5  # Increase ghost size similarly
+        new_size = (int(GRID_SIZE * scale_factor), int(GRID_SIZE * scale_factor))
        
         for ghost in ghost_types:
             frames = []
@@ -198,6 +207,7 @@ class Maze:
                 filename = f"./asset/{ghost}{i:02d}.png"
                 img = pygame.image.load(filename)
                 # Scale the image to GRID_SIZE
+                img = pygame.transform.scale(img, new_size)
                 
                 frames.append(img)
             self.ghost_sprites[ghost] = frames
@@ -208,21 +218,21 @@ class Maze:
         # Keys: "Down", "Right", "Left", "Up". Using "Righ" for the right direction.
         directions = ["Down", "Right", "Left", "Up"]
         self.coachman_sprites = {}
-        
+        # Set a scaling factor (e.g., 1.5 times larger than a cell)
+        scale_factor = 1.5
+        new_size = (int(GRID_SIZE * scale_factor), int(GRID_SIZE * scale_factor))
+
         for d in directions:
             frames = []
             for i in range(1, 4):  # 3 frames per direction
                 filename = f"./asset/coachMan{d}0{i}.png"
                 img = pygame.image.load(filename)
+                img = pygame.transform.scale(img, new_size)
                 
                 frames.append(img)
             self.coachman_sprites[d] = frames
      
-
-
-
-       
-    
+   
 
     def __getitem__(self, idx):
         return self.grid[idx[0]][idx[1]]
@@ -257,19 +267,61 @@ class Maze:
             return (1, 1)  # default if none found
 
     def draw(self, screen):
+        # Set wall scale relative to GRID_SIZE (e.g., 60% of the cell)
+        wall_scale = 0.6
+        wall_size = int(GRID_SIZE * wall_scale)
+        offset = (GRID_SIZE - wall_size) // 2
+
+        # Define a dictionary that maps cell values to drawing functions.
         draw_map = {
-            1: lambda x, y: pygame.draw.rect(screen, BLUE, (x, y, GRID_SIZE, GRID_SIZE)),
+            # For walls (value 1), draw a centered smaller rectangle.
+            1: lambda x, y: pygame.draw.rect(screen, BLUE, (x + offset, y + offset, wall_size, wall_size)),
+            # For pellets (value 2), draw a circle.
             2: lambda x, y: pygame.draw.circle(screen, WHITE, (x + GRID_SIZE // 2, y + GRID_SIZE // 2), 5),
+            # For coachman (value 4), blit the current sprite.
             4: lambda x, y: screen.blit(
                 self.coachman_sprites[self.coachman.direction][self.coachman.current_frame],
                 (x, y)
             )
         }
-    
+        
+        # Loop over the grid, computing x and y positions for each cell,
+        # then call the corresponding drawing function.
         for r, row in enumerate(self.grid):
             for c, val in enumerate(row):
                 if val in draw_map:
-                    draw_map[val](c * GRID_SIZE, r * GRID_SIZE)
+                    x = c * GRID_SIZE
+                    y = r * GRID_SIZE
+                    draw_map[val](x, y)
+
+
+    # def draw(self, screen):
+
+
+    #     wall_size = int(GRID_SIZE * 0.6)  # e.g., 60% of the cell size
+    #     offset = (GRID_SIZE - wall_size) // 2
+    #     pygame.draw.rect(screen, BLUE, (x + offset, y + offset, wall_size, wall_size))
+
+    #     draw_map = {
+    #         1: lambda x, y: pygame.draw.rect(screen, BLUE, (x + offset, y + offset, wall_size, wall_size)),
+            
+    #         # 1: lambda x, y: pygame.draw.rect(screen, BLUE, (x, y, GRID_SIZE, GRID_SIZE)),
+    #         2: lambda x, y: pygame.draw.circle(screen, WHITE, (x + GRID_SIZE // 2, y + GRID_SIZE // 2), 5),
+    #         4: lambda x, y: self._draw_coachman(screen, x, y)
+            
+    #     }
+    
+    #     for r, row in enumerate(self.grid):
+    #         for c, val in enumerate(row):
+    #             if val in draw_map:
+    #                 draw_map[val](c * GRID_SIZE, r * GRID_SIZE)
+
+    def _draw_coachman(self, screen, x, y):
+        # Get current sprite for coachman
+        sprite = self.coachman_sprites[self.coachman.direction][self.coachman.current_frame]
+        # Center the sprite in the cell
+        sprite_rect = sprite.get_rect(center=(x + GRID_SIZE // 2, y + GRID_SIZE // 2))
+        screen.blit(sprite, sprite_rect)
     
 
     def update_position(self, old_pos, new_pos, entity_type):

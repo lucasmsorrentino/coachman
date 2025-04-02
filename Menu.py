@@ -29,13 +29,15 @@ class Menu:
             self.screen.fill(BLACK)
                 # Draw the header image and menu title
             self.screen.blit(source=self.surf, dest=self.rect)
-            self.menu_text(70, (YELLOW), (WIDTH/3, HEIGHT/10), "Coach-Man")
+            self.menu_text(65, (YELLOW), (WIDTH/2, HEIGHT/8), "Coach-Man")
+
+
                 # Draw each menu option
             for i in range(len(MENU_OPTION)):
                 if i == menu_option:
-                    self.menu_text(50, (YELLOW), (WIDTH/9, HEIGHT/2.8 + 60 * i), MENU_OPTION[i])
+                    self.menu_text(35, (RED), (WIDTH/2, HEIGHT/2 + 120 * i), MENU_OPTION[i])
                 else:
-                    self.menu_text(50, (WHITE), (WIDTH/9, HEIGHT/2.8 + 60 * i), MENU_OPTION[i])
+                    self.menu_text(30, (YELLOW), (WIDTH/2, HEIGHT/2 + 120 * i), MENU_OPTION[i])
 
            
             pygame.display.flip()
@@ -60,8 +62,17 @@ class Menu:
                                 
 
     def menu_text(self, text_size: int, text_color: tuple, text_position: tuple, text: str):
-        font = pygame.font.SysFont("helvetica", text_size)
-        text_surface = font.render(text, True, text_color)
-        text_rect = text_surface.get_rect(center=text_position)
-        self.screen.blit(text_surface, text_rect)
+        font = pygame.font.Font('./asset/PressStart2P-Regular.ttf', text_size)
+        lines = text.split("\n")
+        # Calculate total height of the text block
+        total_height = len(lines) * font.get_linesize()
+        # Compute starting y position so that the text block is centered vertically around text_position[1]
+        start_y = text_position[1] - total_height // 2
+
+        for i, line in enumerate(lines):
+            text_surface = font.render(line, True, text_color)
+            # Center each line horizontally at text_position[0] and adjust the y position for each line
+            text_rect = text_surface.get_rect(center=(text_position[0], start_y + i * font.get_linesize()))
+            self.screen.blit(text_surface, text_rect)
+
 
