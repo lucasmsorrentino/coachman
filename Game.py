@@ -83,6 +83,7 @@ class Game:
         pygame.mixer.music.play(-1)
 
         self.screen.fill(BLACK)
+    
         font = pygame.font.Font('./asset/PressStart2P-Regular.ttf', 33)
         
         title = font.render("High Scores", True, (255, 255, 0))
@@ -94,7 +95,8 @@ class Game:
             self.screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, y))
             y += 40
 
-        prompt = font.render("Press any key to return to the menu", 25, True, (255, 255, 255))
+        font = pygame.font.Font('./asset/PressStart2P-Regular.ttf', 20)
+        prompt = font.render("Press any key to return to the menu", True, (255, 255, 255))
         self.screen.blit(prompt, (WIDTH // 2 - prompt.get_width() // 2, HEIGHT - 100))
         
         pygame.display.flip()
