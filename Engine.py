@@ -7,7 +7,17 @@ from score_db import get_high_scores, insert_score
 
 
 class Engine:
+    _instance = None
+
+    @staticmethod
+    def get_instance():
+        if Engine._instance is None:
+            Engine._instance = Engine()
+        return Engine._instance
+
     def __init__(self):
+        if Engine._instance is not None:
+            raise Exception("Use get_instance() instead of instantiating directly.")
         # Set up the main display and clock
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("Coach-Man")
