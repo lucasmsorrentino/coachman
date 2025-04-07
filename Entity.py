@@ -23,37 +23,109 @@ class Coachman:
         self.position = position
         self.score = 0
         self.lives = 3
-        self.direction = "Right"
+        self.direction = "Up"
         self.current_frame = 0
+        self.last_update_time = pygame.time.get_ticks()  # NOVO: armazena o tempo do último update
         self.maze.grid[self.position[0]][self.position[1]] = 4
+        self.next_direction = "Up"
+            # Variáveis para o powerup
+        self.power_mode = False
+        self.power_mode_end = 0
+            
+    def activate_powerup(self):
+        self.power_mode = True
+        self.power_mode_end = pygame.time.get_ticks() + POWERUP_DURATION
 
-    def move(self, direction):
+    def set_direction(self, direction):
+        #self.next_direction = direction
+        self.next_direction = direction.capitalize()
+
+
+
+    def update(self):
+        # Tenta mover na direção desejada
+        
+        if self.try_move(self.next_direction):
+            self.direction = self.next_direction
+        else:
+            # Se não conseguir, tenta continuar na direção atual
+            self.try_move(self.direction)
+
+
+                # Verifica se o powerup expirou
+        if self.power_mode and pygame.time.get_ticks() > self.power_mode_end:
+            self.power_mode = False
+
+            # Atualiza a animação baseado no tempo
+        now = pygame.time.get_ticks()
+        if now - self.last_update_time >= ANIMATION_FRAME_DURATION * 1000:  # converte segundos para milissegundos
+            self.current_frame = (self.current_frame + 1) % COACHMAN_FRAMES_PER_DIR
+            self.last_update_time = now
+
+    def try_move(self, direction):
         row, col = self.position
         new_row, new_col = row, col
-        
-        if direction == "UP":
+
+        if direction == "Up":
             new_row -= 1
-        elif direction == "DOWN":
+        elif direction == "Down":
             new_row += 1
-        elif direction == "LEFT":
+        elif direction == "Left":
             new_col -= 1
-        elif direction == "RIGHT":
+        elif direction == "Right":
             new_col += 1
-        
+
         if self.maze.is_valid_move(new_row, new_col):
             if (new_row, new_col) in self.maze.pellets:
                 self.maze.pellets.remove((new_row, new_col))
                 self.score += 10
             
+                    # Se a nova posição for um powerup:
+            if self.maze.grid[new_row][new_col] == POWERUP:
+                if (new_row, new_col) in self.maze.powerups:
+                    self.maze.powerups.pop((new_row, new_col), None)
+                self.activate_powerup()  # Ativa o modo power
+
             self.maze.update_position((row, col), (new_row, new_col), 4)
             self.position = [new_row, new_col]
-           
-            self.direction = "Right" if direction.upper() == "RIGHT" else direction.capitalize()
-            # Advance animation frame
-            self.current_frame = (self.current_frame + 1) % COACHMAN_FRAMES_PER_DIR
+            self.direction = direction
+            #self.current_frame = (self.current_frame + 1) % COACHMAN_FRAMES_PER_DIR
+            return True
+
+        return False
+    # def move(self, direction):
+    #     row, col = self.position
+    #     new_row, new_col = row, col
+        
+    #     if direction == "UP":
+    #         new_row -= 1
+    #     elif direction == "DOWN":
+    #         new_row += 1
+    #     elif direction == "LEFT":
+    #         new_col -= 1
+    #     elif direction == "RIGHT":
+    #         new_col += 1
+        
+    #     if self.maze.is_valid_move(new_row, new_col):
+    #         if (new_row, new_col) in self.maze.pellets:
+    #             self.maze.pellets.remove((new_row, new_col))
+    #             self.score += 10
             
+    #         self.maze.update_position((row, col), (new_row, new_col), 4)
+    #         self.position = [new_row, new_col]
+           
+    #         self.direction = "Right" if direction.upper() == "RIGHT" else direction.capitalize()
+    #         # Advance animation frame
+    #         self.current_frame = (self.current_frame + 1) % COACHMAN_FRAMES_PER_DIR
+            
+    # def reset_position(self):
+    #     self.position = self.maze.find_initial_pos(4)
+    #     self.maze.grid[self.position[0]][self.position[1]] = 4
     def reset_position(self):
         self.position = self.maze.find_initial_pos(4)
+        self.direction = "Up"
+        self.next_direction = "Up"
+        self.current_frame = 0
         self.maze.grid[self.position[0]][self.position[1]] = 4
 
 class Ghost:
@@ -67,30 +139,78 @@ class Ghost:
         self.maze.grid[self.position[0]][self.position[1]] = 3
         # Animation attributes for ghost (8 frames)
         self.current_frame = 0
+        self.last_update_time = pygame.time.get_ticks()  # NOVO
+    
+    def update_animation(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_update_time >= ANIMATION_FRAME_DURATION * 1000:
+            self.current_frame = (self.current_frame + 1) % 8  # 8 frames para os fantasmas
+            self.last_update_time = now
 
     def move(self):
         # Convert positions to tuples to ensure consistency.
         start = tuple(self.position)
         target = tuple(self.maze.coachman.position)  # Assume coachman is linked to the maze
-
-        # Try to compute a path using A*
-        path = self.astar(start, target, self.maze.grid)
         
-        if path and len(path) > 1:
-            # The next step in the path (path[0] is the current position)
-            next_step = path[1]
-            self.maze.update_position(start, next_step, 3)
-            self.position = list(next_step)
-        else:
-            # Fallback: if no path is found, move randomly.
-            row, col = self.position
+
+          # Se o Coach-Man está em power mode, os fantasmas fogem
+        if self.maze.coachman.power_mode:
+            best_move = None
+            max_distance = -1
+            for dr, dc in self.directions:
+                new_row, new_col = self.position[0] + dr, self.position[1] + dc
+                if self.maze.is_valid_move(new_row, new_col):
+                    # Calcula a distância de Manhattan para o Coach-Man
+                    distance = abs(new_row - target[0]) + abs(new_col - target[1])
+                    if distance > max_distance:
+                        max_distance = distance
+                        best_move = (new_row, new_col)
+            if best_move:
+                self.maze.update_position(start, best_move, 3)
+                self.position = list(best_move)
+                return
+            # Se nenhuma direção melhora a distância, pode optar por um movimento aleatório
             random.shuffle(self.directions)
             for dr, dc in self.directions:
-                new_row, new_col = row + dr, col + dc
+                new_row, new_col = self.position[0] + dr, self.position[1] + dc
                 if self.maze.is_valid_move(new_row, new_col):
-                    self.maze.update_position((row, col), (new_row, new_col), 3)
+                    self.maze.update_position(start, (new_row, new_col), 3)
                     self.position = [new_row, new_col]
-                    break
+                    return
+        else:
+            # Comportamento normal: usa A* para perseguir o Coach-Man
+            path = self.astar(start, target, self.maze.grid)
+            if path and len(path) > 1:
+                next_step = path[1]
+                self.maze.update_position(start, next_step, 3)
+                self.position = list(next_step)
+            else:
+                # Fallback: movimento aleatório se não encontrar um caminho
+                random.shuffle(self.directions)
+                for dr, dc in self.directions:
+                    new_row, new_col = self.position[0] + dr, self.position[1] + dc
+                    if self.maze.is_valid_move(new_row, new_col):
+                        self.maze.update_position(start, (new_row, new_col), 3)
+                        self.position = [new_row, new_col]
+                        break
+        # # Try to compute a path using A*
+        # path = self.astar(start, target, self.maze.grid)
+        
+        # if path and len(path) > 1:
+        #     # The next step in the path (path[0] is the current position)
+        #     next_step = path[1]
+        #     self.maze.update_position(start, next_step, 3)
+        #     self.position = list(next_step)
+        # else:
+        #     # Fallback: if no path is found, move randomly.
+        #     row, col = self.position
+        #     random.shuffle(self.directions)
+        #     for dr, dc in self.directions:
+        #         new_row, new_col = row + dr, col + dc
+        #         if self.maze.is_valid_move(new_row, new_col):
+        #             self.maze.update_position((row, col), (new_row, new_col), 3)
+        #             self.position = [new_row, new_col]
+        #             break
 
     def astar(self, start, goal, grid):
         
@@ -161,7 +281,15 @@ class Ghost:
         y = self.position[0] * GRID_SIZE
         # Center the ghost sprite in the cell
         sprite_rect = sprite.get_rect(center=(x + GRID_SIZE // 2, y + GRID_SIZE // 2))
-        screen.blit(sprite, sprite_rect)
+
+        # Se o power mode estiver ativo, desenha com um contorno azul (ou modifique a cor)
+        if self.maze.coachman.power_mode:
+            # Cria uma cópia do sprite para alterar a cor (exemplo simples)
+            tinted_sprite = sprite.copy()
+            tinted_sprite.fill((BLUE), special_flags=pygame.BLEND_RGB_ADD)
+            screen.blit(tinted_sprite, sprite_rect)
+        else:
+            screen.blit(sprite, sprite_rect)
 
 @dataclass
 class Maze:
@@ -175,6 +303,7 @@ class Maze:
 
     
     def __init__(self):
+
         self.pellets = {
             (r, c) for r, row in enumerate(INITIAL_GRID)
             for c, val in enumerate(row) if val == 2
@@ -182,7 +311,21 @@ class Maze:
         self.grid = [row[:] for row in INITIAL_GRID]
         self.coachman_sprites = {}
         self.coachman = None
-        self.ghost_sprites = []  # New attribute for ghost assets
+        self.ghost_sprites = {}  # Já é um dicionário para os fantasmas
+
+        # Define as posições dos powerups e associa cada posição a um índice (0 a 3)
+        self.powerups = {
+            (1, 2): 0,
+            (1, COLS - 2): 1,
+            (ROWS - 2, 2): 2,
+            (ROWS - 2, COLS - 2): 3
+        }
+        for pos in self.powerups:
+            r, c = pos
+            self.grid[r][c] = POWERUP
+
+        # Carrega as imagens do powerup
+        self.load_powerup_images()
 
     def reset(self):
         """Reset maze to initial state while preserving sprites and coachman reference"""
@@ -192,7 +335,20 @@ class Maze:
         }
         self.grid = [row[:] for row in INITIAL_GRID]
         
-
+    def load_powerup_images(self):
+     
+        self.powerup_images = []
+        for i in range(1, 5):
+            filename = f"./asset/powerup{i}.png"
+            try:
+                img = pygame.image.load(filename).convert_alpha()
+            
+                # Redimensiona a imagem para caber na célula do grid, se necessário:
+                img = pygame.transform.scale(img, (GRID_SIZE, GRID_SIZE))
+                self.powerup_images.append(img)
+            except Exception as e:
+                print(f"Erro ao carregar {filename}: {e}")
+        print("Powerup images carregadas:", len(self.powerup_images))
 
     def load_ghost_sprites(self):
         # Load ghost sprites for each ghost type and store them in a dictionary.
@@ -208,7 +364,8 @@ class Maze:
                 img = pygame.image.load(filename)
                 # Scale the image to GRID_SIZE
                 img = pygame.transform.scale(img, new_size)
-                
+                 # Use smoothscale para suavizar o redimensionamento
+                img = pygame.transform.smoothscale(img, new_size)
                 frames.append(img)
             self.ghost_sprites[ghost] = frames
 
@@ -228,7 +385,8 @@ class Maze:
                 filename = f"./asset/coachMan{d}0{i}.png"
                 img = pygame.image.load(filename)
                 img = pygame.transform.scale(img, new_size)
-                
+                 # Use smoothscale para suavizar o redimensionamento
+                img = pygame.transform.smoothscale(img, new_size)
                 frames.append(img)
             self.coachman_sprites[d] = frames
      
@@ -282,8 +440,10 @@ class Maze:
             4: lambda x, y: screen.blit(
                 self.coachman_sprites[self.coachman.direction][self.coachman.current_frame],
                 (x, y)
-            )
-        }
+            ),
+           # POWERUP: lambda x, y: pygame.draw.circle(screen, (0, 255, 0), (x + GRID_SIZE // 2, y + GRID_SIZE // 2), 8)
+    }
+        
         
         # Loop over the grid, computing x and y positions for each cell,
         # then call the corresponding drawing function.
@@ -293,7 +453,15 @@ class Maze:
                     x = c * GRID_SIZE
                     y = r * GRID_SIZE
                     draw_map[val](x, y)
-
+                elif val == POWERUP:
+                    # Obtenha o índice da imagem a partir do dicionário de powerups
+                    powerup_index = self.powerups.get((r, c), 0)
+                    # Desenha a imagem do powerup na posição (x, y)
+                    if self.powerup_images:
+                        screen.blit(self.powerup_images[powerup_index], (x, y))
+                    else:
+                        # Caso as imagens não tenham sido carregadas, desenha um placeholder
+                        pygame.draw.rect(screen, (0, 255, 0), (x, y, GRID_SIZE, GRID_SIZE))
 
     # def draw(self, screen):
 
@@ -323,15 +491,44 @@ class Maze:
         sprite_rect = sprite.get_rect(center=(x + GRID_SIZE // 2, y + GRID_SIZE // 2))
         screen.blit(sprite, sprite_rect)
     
-
     def update_position(self, old_pos, new_pos, entity_type):
         old_r, old_c = old_pos
         new_r, new_c = new_pos
+
+        # Limpa a posição antiga
+        if entity_type == 3:  # Ghost
+            # Se a posição anterior tinha um pellet, restaura ele
+            if (old_r, old_c) in self.pellets:
+                self.grid[old_r][old_c] = 2
+            else:
+                self.grid[old_r][old_c] = 0
+        else:
+            # Coachman ou outro tipo — sempre limpa
+            self.grid[old_r][old_c] = 0
+
+        # Atualiza nova posição
+        if entity_type == 3 and self.grid[new_r][new_c] == 2:
+            pass  # Fantasma não sobrescreve visualmente o pellet
+        else:
+            self.grid[new_r][new_c] = entity_type
+    # def update_position(self, old_pos, new_pos, entity_type):
+    #     old_r, old_c = old_pos
+    #     new_r, new_c = new_pos
         
-        if self[old_r, old_c] != 1:
-            self[old_r, old_c] = 0
+    #     if self[old_r, old_c] == 3:
+    #         # Se o fantasma saiu de um lugar com pellet, restaure o pellet
+    #         if (old_r, old_c) in self.pellets:
+    #             self[old_r, old_c] = 2
+    #         else:
+    #             self[old_r, old_c] = 0
+
+    #     # Não sobrescreve o pellet com o valor do fantasma no grid
+    #     if entity_type == 3 and self.grid[new_r][new_c] == 2:
+    #         pass  # mantém o pellet visível
+    #     else:
+    #         self[new_r, new_c] = entity_type
             
-        self[new_r, new_c] = entity_type
+    #     self[new_r, new_c] = entity_type
 
     def is_valid_move(self, row, col):
         return 0 <= row < ROWS and 0 <= col < COLS and self.grid[row][col] != 1

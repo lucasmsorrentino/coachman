@@ -37,6 +37,10 @@ class Engine:
         # Set up initial game state
         self.coachman.lives = 3
         self.frame_counter = 0
+        self.ghost_move_interval = 100      # Exemplo: 100 milissegundos para os fantasmas
+        self.coachman_move_interval = 150   # Exemplo: 150 milissegundos para o Coachman
+        self.last_ghost_move_time = pygame.time.get_ticks()
+        self.last_coachman_move_time = pygame.time.get_ticks()
 
 
     def handle_events(self):
@@ -45,13 +49,22 @@ class Engine:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
-                    self.coachman.move("UP")
+                    self.coachman.set_direction("UP")
                 elif event.key == pygame.K_DOWN:
-                    self.coachman.move("DOWN")
+                    self.coachman.set_direction("DOWN")
                 elif event.key == pygame.K_LEFT:
-                    self.coachman.move("LEFT")
+                    self.coachman.set_direction("LEFT")
                 elif event.key == pygame.K_RIGHT:
-                    self.coachman.move("RIGHT")
+                    self.coachman.set_direction("RIGHT")
+            # elif event.type == pygame.KEYDOWN:
+            #     if event.key == pygame.K_UP:
+            #         self.coachman.move("UP")
+            #     elif event.key == pygame.K_DOWN:
+            #         self.coachman.move("DOWN")
+            #     elif event.key == pygame.K_LEFT:
+            #         self.coachman.move("LEFT")
+            #     elif event.key == pygame.K_RIGHT:
+            #         self.coachman.move("RIGHT")
 
     def render(self):
         self.screen.fill(BLACK)
@@ -109,19 +122,41 @@ class Engine:
     def check_collision(self):
         for ghost in self.ghosts:
             if self.coachman.position == ghost.position:
-                self.coachman.lives -= 1
-                if self.coachman.lives > 0:
-                    self.display_message("You lost a life!", RED)
-                    self.reset_coachman()
-                    self.reset_ghosts()
+                if self.coachman.power_mode:
+                    # Coach-Man come o fantasma
+                    self.coachman.score += 200
+                    ghost.reset_position()
+                    # Se um fantasma foi "comido", interrompe a verificação
+                    return
                 else:
-                     #insert the score using the score_db module.
+                    self.coachman.lives -= 1
+                    if self.coachman.lives > 0:
+                        self.display_message("You lost a life!", RED)
+                        self.reset_coachman()
+                        self.reset_ghosts()
+                    else:
+                        self.display_message(f"Final Score: {self.coachman.score}\n Game Over!", RED)
+                        self.display_game_over()
+                        return "GAME_OVER"
+                    # Interrompe a verificação para que não processe outras colisões no mesmo frame
+                    return
+                # self.coachman.lives -= 1
+                # if self.coachman.lives > 0:
+                #     self.display_message("You lost a life!", RED)
+                #     self.reset_coachman()
+                #     self.reset_ghosts()
+                # if self.coachman.power_mode:
+                #     # Coach-Man come o fantasma
+                #     self.coachman.score -= 200  # ou a pontuação que preferir
+                #     ghost.reset_position()
+                # else:
+                #      #insert the score using the score_db module.
 
-                    self.display_message(f"Final Score: {self.coachman.score}\n Game Over!", RED)
+                #     self.display_message(f"Final Score: {self.coachman.score}\n Game Over!", RED)
                     
-                    self.display_game_over()
+                #     self.display_game_over()
 
-                    return "GAME_OVER"
+                #     return "GAME_OVER"
                 
     def display_game_over(self):
         # Load and scale the game over image (ensure you have this image in the asset folder)
@@ -139,27 +174,68 @@ class Engine:
             ghost.reset_position()
 
 
+    # def update(self):
+    #     # Update ghost movement 
+    #     if self.frame_counter % 12 == 0:
+    #         for ghost in self.ghosts:
+    #             ghost.move()
+    #         self.coachman.update()
+
+    #     # Check for collisions; if game over, stop updating by breaking out of the game loop
+    #     if self.check_collision() == "GAME_OVER":
+    #         self.running = False
+    #         return 
+
+    #     # Use the frame counter to update animations.
+        # Assuming 60 FPS, updating every 6 frames is roughly equivalent to 0.1 seconds.
+        # if self.frame_counter % 6 == 0:
+        #     # Update Coachman's animation frame
+        #     self.coachman.current_frame = (self.coachman.current_frame + 1) % COACHMAN_FRAMES_PER_DIR
+        #     # Update each Ghost's animation frame (assuming 8 frames for ghosts)
+        #     for ghost in self.ghosts:
+        #         ghost.current_frame = (ghost.current_frame + 1) % 8
+    # def update(self):
+    #     # Atualiza movimento (pode continuar usando uma lógica separada, se necessário)
+    #     if self.frame_counter % 12 == 0:
+    #         for ghost in self.ghosts:
+    #             ghost.move()
+    #             if self.check_collision() == "GAME_OVER":
+    #                 self.running = False
+    #                 return
+    #         self.coachman.update()
+    #         if self.check_collision() == "GAME_OVER":
+    #             self.running = False
+    #             return  # O método update já cuida do movimento e da animação do Coach-Man
+
+    #     # Atualiza animação dos fantasmas
+    #     for ghost in self.ghosts:
+    #         ghost.update_animation()
+
+    #     # Se houver outras atualizações baseadas no tempo, elas podem ser incluídas aqui.
+
+    #     self.frame_counter += 1
+        
+    #     return True
     def update(self):
-        # Update ghost movement 
-        if self.frame_counter % 5 == 0:
+        now = pygame.time.get_ticks()
+        
+        # Atualiza os fantasmas se o intervalo tiver passado
+        if now - self.last_ghost_move_time >= self.ghost_move_interval:
             for ghost in self.ghosts:
                 ghost.move()
-            
+            self.last_ghost_move_time = now
+        
+        # Atualiza o Coachman se o intervalo tiver passado
+        if now - self.last_coachman_move_time >= self.coachman_move_interval:
+            self.coachman.update()
+            self.last_coachman_move_time = now
 
-        # Check for collisions; if game over, stop updating by breaking out of the game loop
+        # Verifica colisões
         if self.check_collision() == "GAME_OVER":
             self.running = False
-            return 
+            return
 
-        # Use the frame counter to update animations.
-        # Assuming 60 FPS, updating every 6 frames is roughly equivalent to 0.1 seconds.
-        if self.frame_counter % 6 == 0:
-            # Update Coachman's animation frame
-            self.coachman.current_frame = (self.coachman.current_frame + 1) % COACHMAN_FRAMES_PER_DIR
-            # Update each Ghost's animation frame (assuming 8 frames for ghosts)
-            for ghost in self.ghosts:
-                ghost.current_frame = (ghost.current_frame + 1) % 8
-
-        self.frame_counter += 1
-        return True
+        # Atualize animações se necessário, por exemplo:
+        for ghost in self.ghosts:
+            ghost.update_animation()
 
