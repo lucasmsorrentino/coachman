@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest>=8
+pygbag>=0.9   # empacota o jogo para o navegador (WebAssembly)
+pillow>=10    # tools/build_assets.py

@@ -1,35 +1,38 @@
 # ✅ TASK.md - Coach-Man
 
-Este documento organiza as tarefas do projeto por prioridade e categoria, para facilitar o acompanhamento do progresso e a colaboração com IA.
+Tarefas do projeto por prioridade.
 
 ---
 
 ## 🔥 Alta Prioridade
 
-- [ ] Implementar movimentação contínua do Coach-Man com detecção de tecla pressionada.
-- [ ] Refatorar o código base (especialmente Game, Engine e Entity).
-- [ ] Criar sistema de power-up com tempo de duração e efeito sobre fantasmas.
-- [ ] Criar novo mapa com maior complexidade e design visual melhorado.
-- [ ] Melhorar comportamento dos fantasmas com variações de perseguição.
+- [x] Movimentação contínua do Coach-Man (direção desejada com memória).
+- [x] Refatorar o código base (Game, Engine e Entity viraram `app`, `world`, `actors`...).
+- [x] Sistema de power-up com duração e efeito sobre as cadeiras.
+- [x] Novos mapas com maior complexidade e visual melhorado.
+- [x] Comportamento das cadeiras com variações de perseguição.
+- [x] Rodar no navegador sem download (pygbag + GitHub Pages).
 
 ## 🎯 Média Prioridade
 
-- [ ] Adicionar sistema de fases.
-- [ ] Criar HUD com feedback visual (ex: tempo do power-up, barra de progresso).
-- [ ] Criar função de pausa no jogo com tecla "P".
-- [ ] Adicionar som de coleta de pellet e perda de vida.
-- [ ] Criar mais telas intermediárias (transição de fase, vitória).
+- [x] Sistema de fases.
+- [x] HUD (placar, recorde, vidas, fase).
+- [x] Pausa com "P".
+- [x] Sons de coleta e de perda de vida.
+- [x] Telas intermediárias (apresentação da fase, fim de jogo).
 
 ## 🧪 Refatoração e Qualidade
 
-- [ ] Separar melhor a lógica de exibição e lógica de jogo.
-- [ ] Modularizar o código por funcionalidades (ex: módulo de som, módulo de input).
-- [ ] Comentar e documentar funções críticas.
-- [ ] Padronizar nome de variáveis e arquivos.
+- [x] Separar lógica de exibição e lógica de jogo.
+- [x] Modularizar por funcionalidade (som, entrada, persistência...).
+- [x] Comentar e documentar funções críticas.
+- [x] Padronizar nomes de variáveis e arquivos.
+- [x] Testes automatizados + CI.
 
 ## 💡 Extras e Ideias Futuras
 
 - [ ] Modo 2 jogadores (turnos ou competitivo).
-- [ ] Ranking online (usando backend simples).
+- [ ] Ranking online (backend simples).
 - [ ] Skins alternativas para o Coach-Man.
-- [ ] Eventos aleatórios no mapa (ex: teleport, boost).
+- [ ] Eventos aleatórios no mapa (ex: teleporte, boost).
+- [ ] Cenas de intervalo entre fases, como no arcade.

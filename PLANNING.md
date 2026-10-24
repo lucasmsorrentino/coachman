@@ -1,55 +1,58 @@
 # 🧠 PLANNING.md - Coach-Man
 
-Este documento descreve a visão geral de desenvolvimento do jogo **Coach-Man**, incluindo os objetivos alcançados até agora e as metas futuras de aprimoramento.
+Visão geral do desenvolvimento do **Coach-Man**: o que já foi alcançado e o
+que ainda pode vir.
 
-## ✅ Estado Atual
+## ✅ Estado atual (v2)
 
-- Base funcional do jogo desenvolvida com Pygame.
-- Personagem principal (Coach-Man) com sprites e animação.
-- Fantasmas com IA baseada no algoritmo A*.
-- Sistema de placar persistente com SQLite.
-- Menu inicial funcional com música.
-- Tela de game over personalizada.
-- Executável (.exe) disponível para usuários finais.
-- Mapa e layout inicial com movimentação funcional.
+- Jogo reescrito em Python (pygame-ce) com arquitetura em camadas e padrões de
+  projeto documentados ([docs/ARQUITETURA.md](docs/ARQUITETURA.md)).
+- Versão **web** (WebAssembly via pygbag) publicada pelo GitHub Actions no
+  GitHub Pages — sem `.exe` para baixar.
+- Jogabilidade e IA fiéis ao arcade ([docs/FANTASMAS.md](docs/FANTASMAS.md)).
+- 3 labirintos alternando por fase, tabela de dificuldade do arcade.
+- Arte refinada a partir dos originais, por um pipeline reproduzível
+  ([docs/ARTE.md](docs/ARTE.md)).
+- 61 testes automatizados.
 
-## 🧩 Melhorias Futuras Planejadas
+## 🧩 Melhorias planejadas
 
 ### 🎮 Jogabilidade
-- [ ] Direcional contínuo: manter movimento enquanto a tecla estiver pressionada.
-- [ ] Adição de power-ups temporários (ex: invencibilidade, fantasma vulnerável).
-- [ ] Sistema de vidas extras baseado em pontuação.
-- [ ] Pausa no jogo (pressionando "P").
-- [ ] Fim de fase ao coletar todos os pellets.
+- [x] Direcional contínuo / direção desejada com memória.
+- [x] Power-ups temporários com fantasmas vulneráveis.
+- [x] Vida extra por pontuação (10.000).
+- [x] Pausa no jogo ("P").
+- [x] Fim de fase ao coletar todos os "$".
+- [ ] Cenas de intervalo ("intermissions") entre fases, como no arcade.
 
 ### 🧠 Inteligência Artificial
-- [ ] Melhorar a IA dos fantasmas com padrões distintos de perseguição (inspirados no Pac-Man original).
-- [ ] Adicionar comportamento de “scatter” (fantasmas se afastam por alguns segundos).
-- [ ] Estados de vulnerabilidade após power-up.
+- [x] Padrões distintos de perseguição (Blinky, Pinky, Inky, Clyde).
+- [x] Modo "scatter" (dispersão) alternando com perseguição.
+- [x] Estados de vulnerabilidade após power-up.
+- [x] Modo Raio-X para visualizar os alvos em tempo real.
 
 ### 🧱 Mapa e Visuais
-- [ ] Criar novos mapas com maior complexidade.
-- [ ] Sistema de fases (ex: fase 1, fase 2, etc).
-- [ ] Telas de transição entre fases.
-- [ ] Melhorar design visual do labirinto (ex: tiles com bordas).
-- [ ] Suporte a múltiplos mapas carregados dinamicamente.
+- [x] Novos mapas (Pico dos Marins, Imersão).
+- [x] Sistema de fases.
+- [x] Telas de transição entre fases.
+- [x] Labirinto com bordas arredondadas estilo arcade.
+- [x] Múltiplos mapas carregados de dados em texto.
+- [ ] Editor de labirintos no navegador.
 
 ### 💻 Código e Arquitetura
-- [ ] Refatorar o código para melhor separação de responsabilidades.
-- [ ] Implementar padrão State para os estados do jogo.
-- [ ] Criar testes automatizados básicos.
-- [ ] Documentação interna do código.
+- [x] Separação de responsabilidades (core / world / actors / systems / scenes / ui).
+- [x] Padrão State para os estados do jogo e das cadeiras.
+- [x] Testes automatizados.
+- [x] Documentação interna do código.
 
 ### 🎵 Áudio e Feedback
-- [ ] Sons para coleta de pellet(no score), perda de vida e game over.
-
-- [ ] Ajuste de volumes via menu.
+- [x] Sons de coleta, power-up, cadeirada, morte, vovó e vida extra.
+- [x] Liga/desliga do som ("M").
+- [ ] Ajuste fino de volume via menu.
 
 ### 📦 Distribuição e Interface
-- [ ] Adicionar ícone ao .exe.
-- [ ] Tela de configurações (ex: volume, resolução).
-- [ ] Adicionar opção fullscreen.
-- [ ] Melhorar README e adicionar prints ou GIFs.
-
----
-
+- [x] Versão web (substitui o `.exe`).
+- [x] Ícone.
+- [x] Tela cheia ("F").
+- [x] README com prints e GIF.
+- [ ] Ranking online (hoje cada navegador guarda o seu).

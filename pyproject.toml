@@ -1,0 +1,19 @@
+[project]
+name = "coachman"
+version = "2.0.0"
+description = "Coach-Man: um Pac-Man brasileiro com cadeiras voadoras, em Python (pygame-ce), jogável no navegador via pygbag."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["pygame-ce>=2.4"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pygbag>=0.9", "pillow>=10"]
+
+[tool.pytest.ini_options]
+pythonpath = ["coachman"]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"

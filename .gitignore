@@ -1,1 +1,9 @@
 venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+# saída do pygbag (gerada pelo GitHub Actions)
+coachman/build/
+*.db

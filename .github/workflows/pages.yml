@@ -1,0 +1,70 @@
+# Testa o jogo, empacota para o navegador com o pygbag (WebAssembly) e
+# publica no GitHub Pages. Configuração única no repositório:
+#   Settings -> Pages -> Build and deployment -> Source: "GitHub Actions"
+name: Testes e deploy (GitHub Pages)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Dependências
+        run: pip install pygame-ce pytest
+      - name: Testes
+        env:
+          SDL_VIDEODRIVER: dummy
+          SDL_AUDIODRIVER: dummy
+        run: python -m pytest
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instala o pygbag
+        run: pip install "pygbag==0.9.3"
+      - name: Empacota para a web
+        # --no_opt: mantém o áudio original (estéreo, com voz) e as imagens sem perda
+        run: >
+          python -m pygbag --build --no_opt
+          --template web/coachman.tmpl
+          --title "Coach-Man"
+          --icon coachman/favicon.png
+          coachman
+      - name: Imagem de pré-visualização (links compartilhados)
+        run: cp docs/img/title.png coachman/build/web/preview.png
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: coachman/build/web
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,2 @@
+# para jogar no computador
+pygame-ce>=2.4
