@@ -1,0 +1,153 @@
+classDiagram
+    direction TB
+    namespace aplicacao {
+        class App {
+            <<Composition Root>>
+            +screen
+            +assets: AssetLibrary
+            +audio: AudioService
+            +scores: HighScoreRepository
+            +input: InputHandler
+            +scenes: SceneStack
+            +clock: Clock
+            +joysticks: list
+            +loop: GameLoop
+            +run()
+            +quit()
+            +process_input()
+            +update(dt)
+            +render()
+        }
+    }
+    namespace core {
+        class SceneStack {
+            <<State · pilha>>
+            +top: Scene?
+            +push(scene)
+            +pop() Scene?
+            +replace(scene)
+            +update(dt)
+            +draw(surface)
+        }
+        class CommandTarget {
+            <<Command · Receiver>>
+            +on_direction(direction)
+            +on_confirm()
+            +on_back()
+            +on_pause()
+            +on_toggle_debug()
+            +on_text(char)
+            +on_erase()
+        }
+        class Scene {
+            <<State>>
+            +app: App
+            +enter()
+            +exit()
+            +resume()
+            +update(dt)
+            +draw(surface)
+        }
+    }
+    namespace scenes {
+        class TitleScene {
+            +selected: int
+            +time: float
+            +update(dt)
+            +on_direction(direction)
+            +on_confirm()
+            +resume()
+            +draw(surface)
+        }
+        class PlayScene {
+            +rng: Random
+            +bus: EventBus
+            +session: Session
+            +sfx: SoundEffects
+            +popups: Popups
+            +debug: bool
+            +frame: int
+            +update(dt)
+            +on_direction(direction)
+            +on_confirm()
+            +on_pause()
+            +on_focus_lost()
+            +on_toggle_debug()
+            +draw(surface)
+        }
+        class PauseScene {
+            +enter()
+            +exit()
+            +draw(surface)
+            +on_confirm()
+            +on_back()
+        }
+        class GameOverScene {
+            +score: int
+            +level: int
+            +elapsed: float
+            +enter()
+            +update(dt)
+            +on_confirm()
+            +draw(surface)
+        }
+        class InitialsScene {
+            +score: int
+            +level: int
+            +letters: list
+            +cursor: int
+            +time: float
+            +initials: str
+            +enter()
+            +exit()
+            +update(dt)
+            +on_direction(direction)
+            +on_text(char)
+            +on_erase()
+            +on_confirm()
+            +draw(surface)
+        }
+        class HighScoresScene {
+            +highlight: ScoreEntry
+            +time: float
+            +entries: list~ScoreEntry~
+            +update(dt)
+            +on_confirm()
+            +draw(surface)
+        }
+        class HelpScene {
+            +time: float
+            +update(dt)
+            +on_confirm()
+            +draw(surface)
+        }
+        class ExitScene {
+            +time: float
+            +web
+            +update(dt)
+            +on_confirm()
+            +draw(surface)
+        }
+    }
+    CommandTarget <|-- Scene
+    Scene <|-- TitleScene
+    Scene <|-- PlayScene
+    Scene <|-- PauseScene
+    Scene <|-- GameOverScene
+    Scene <|-- InitialsScene
+    Scene <|-- HighScoresScene
+    Scene <|-- HelpScene
+    Scene <|-- ExitScene
+    App *-- SceneStack : scenes
+    SceneStack o-- Scene : pilha
+    Scene --> App : app
+    TitleScene ..> PlayScene : cria
+    TitleScene ..> HighScoresScene : empilha
+    TitleScene ..> HelpScene : empilha
+    TitleScene ..> ExitScene : empilha
+    PlayScene ..> PauseScene : empilha
+    PlayScene ..> GameOverScene : cria
+    GameOverScene ..> InitialsScene : cria
+    GameOverScene ..> HighScoresScene : cria
+    InitialsScene ..> HighScoresScene : cria
+    PauseScene ..> TitleScene : cria

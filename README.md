@@ -89,6 +89,10 @@ próprio código e documentados em **[docs/ARQUITETURA.md](docs/ARQUITETURA.md)*
 A lógica do jogo não desenha nem toca som — só publica eventos —, então é
 testada inteira sem abrir janela.
 
+📐 **Diagramas de classes UML** (gerados a partir do código): **[docs/DIAGRAMAS.md](docs/DIAGRAMAS.md)**.
+
+[![Diagrama de classes: atores e IA](docs/img/diagramas/2-ia-das-cadeiras.svg)](docs/DIAGRAMAS.md)
+
 ## 🚀 Rodando localmente
 
 **No computador (Python 3.11+):**

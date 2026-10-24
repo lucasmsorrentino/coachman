@@ -73,6 +73,10 @@ inteira do jogo é testada sem abrir janela (`tests/`).
 
 ## Diagrama de classes (núcleo do jogo)
 
+> Resumo das classes centrais. Os diagramas **completos** (todas as classes,
+> com atributos e métodos, gerados a partir do código) estão em
+> **[DIAGRAMAS.md](DIAGRAMAS.md)**.
+
 ```mermaid
 classDiagram
     class Actor {

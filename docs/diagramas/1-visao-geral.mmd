@@ -1,0 +1,302 @@
+classDiagram
+    direction LR
+    namespace actors {
+        class Actor {
+            <<abstract · Template Method>>
+        }
+        class CoachMan {
+        }
+        class GhostProfile {
+            <<dataclass>>
+        }
+        class EntityFactory {
+            <<Factory>>
+        }
+        class GhostWorld {
+            <<interface>>
+        }
+        class Ghost {
+            <<Context de State e Strategy>>
+        }
+        class GhostState {
+            <<abstract · State>>
+        }
+        class ScatterState {
+        }
+        class ChaseState {
+        }
+        class FrightenedState {
+        }
+        class EatenState {
+        }
+        class _HouseMovement {
+        }
+        class InHouseState {
+        }
+        class LeavingHouseState {
+        }
+        class EnteringHouseState {
+        }
+        class TargetContext {
+            <<dataclass>>
+        }
+        class TargetingStrategy {
+            <<abstract · Strategy>>
+        }
+        class ShadowTargeting {
+        }
+        class AmbushTargeting {
+        }
+        class WhimsicalTargeting {
+        }
+        class PokeyTargeting {
+        }
+    }
+    namespace aplicacao {
+        class App {
+            <<Composition Root>>
+        }
+        class LevelSpec {
+            <<dataclass>>
+        }
+    }
+    namespace core {
+        class AssetLibrary {
+            <<Flyweight>>
+        }
+        class AudioService {
+            <<abstract · Facade>>
+        }
+        class NullAudio {
+            <<Null Object>>
+        }
+        class PygameAudio {
+            <<Singleton>>
+        }
+        class CommandTarget {
+            <<Command · Receiver>>
+        }
+        class Command {
+            <<abstract · Command>>
+        }
+        class DirectionCommand {
+        }
+        class ConfirmCommand {
+        }
+        class BackCommand {
+        }
+        class PauseCommand {
+        }
+        class ToggleDebugCommand {
+        }
+        class TextCommand {
+        }
+        class EraseCommand {
+        }
+        class AppCommand {
+        }
+        class InputHandler {
+            <<Command · Invoker>>
+        }
+        class EventBus {
+            <<Observer · Subject>>
+        }
+        class DotEaten {
+            <<event>>
+        }
+        class EnergizerEaten {
+            <<event>>
+        }
+        class GhostEaten {
+            <<event>>
+        }
+        class CoachManCaught {
+            <<event>>
+        }
+        class BonusSpawned {
+            <<event>>
+        }
+        class BonusEaten {
+            <<event>>
+        }
+        class ModeChanged {
+            <<event>>
+        }
+        class FrightStarted {
+            <<event>>
+        }
+        class FrightEnded {
+            <<event>>
+        }
+        class ExtraLife {
+            <<event>>
+        }
+        class LevelCleared {
+            <<event>>
+        }
+        class GameLoop {
+            <<Game Loop>>
+        }
+        class Scene {
+            <<State>>
+        }
+        class SceneStack {
+            <<State · pilha>>
+        }
+    }
+    namespace persistence {
+        class ScoreEntry {
+            <<dataclass>>
+        }
+        class HighScoreRepository {
+            <<abstract · Repository>>
+        }
+        class InMemoryHighScoreRepository {
+        }
+        class SqliteHighScoreRepository {
+        }
+        class BrowserHighScoreRepository {
+        }
+    }
+    namespace scenes {
+        class ExitScene {
+        }
+        class GameOverScene {
+        }
+        class HelpScene {
+        }
+        class HighScoresScene {
+        }
+        class InitialsScene {
+        }
+        class PauseScene {
+        }
+        class Phase {
+            <<enumeration>>
+        }
+        class SoundEffects {
+            <<Observer · assinante>>
+        }
+        class Popups {
+            <<Observer · assinante>>
+        }
+        class PlayScene {
+        }
+        class TitleScene {
+        }
+    }
+    namespace systems {
+        class GhostHouse {
+        }
+        class ModeScheduler {
+        }
+        class Session {
+            <<Observer · assinante>>
+        }
+    }
+    namespace world {
+        class Direction {
+            <<enumeration>>
+        }
+        class MazeDefinition {
+            <<dataclass>>
+        }
+        class Maze {
+            <<dataclass>>
+        }
+        class Bonus {
+        }
+        class World {
+            <<Mediator>>
+        }
+    }
+    Actor <|-- CoachMan
+    Actor <|-- Ghost
+    GhostState <|-- ScatterState
+    ScatterState <|-- ChaseState
+    GhostState <|-- FrightenedState
+    GhostState <|-- EatenState
+    GhostState <|-- _HouseMovement
+    _HouseMovement <|-- InHouseState
+    _HouseMovement <|-- LeavingHouseState
+    _HouseMovement <|-- EnteringHouseState
+    TargetingStrategy <|-- ShadowTargeting
+    TargetingStrategy <|-- AmbushTargeting
+    TargetingStrategy <|-- WhimsicalTargeting
+    TargetingStrategy <|-- PokeyTargeting
+    AudioService <|-- NullAudio
+    AudioService <|-- PygameAudio
+    Command <|-- DirectionCommand
+    Command <|-- ConfirmCommand
+    Command <|-- BackCommand
+    Command <|-- PauseCommand
+    Command <|-- ToggleDebugCommand
+    Command <|-- TextCommand
+    Command <|-- EraseCommand
+    Command <|-- AppCommand
+    CommandTarget <|-- Scene
+    HighScoreRepository <|-- InMemoryHighScoreRepository
+    HighScoreRepository <|-- SqliteHighScoreRepository
+    HighScoreRepository <|-- BrowserHighScoreRepository
+    Scene <|-- ExitScene
+    Scene <|-- GameOverScene
+    Scene <|-- HelpScene
+    Scene <|-- HighScoresScene
+    Scene <|-- InitialsScene
+    Scene <|-- PauseScene
+    Scene <|-- PlayScene
+    Scene <|-- TitleScene
+    App *-- GameLoop : loop
+    App *-- SceneStack : scenes
+    App *-- InputHandler : input
+    App *-- AssetLibrary : assets
+    App o-- AudioService : audio
+    App o-- HighScoreRepository : scores
+    SceneStack o-- Scene : pilha
+    Scene --> App : app
+    InputHandler ..> Command : traduz eventos em
+    Command ..> CommandTarget : execute(alvo)
+    HighScoreRepository ..> ScoreEntry
+    PlayScene *-- World : world
+    PlayScene *-- Session : session
+    PlayScene *-- EventBus : bus
+    PlayScene *-- SoundEffects : sfx
+    PlayScene *-- Popups : popups
+    PlayScene --> Phase : phase
+    TitleScene ..> PlayScene : cria
+    TitleScene ..> HighScoresScene : empilha
+    TitleScene ..> HelpScene : empilha
+    TitleScene ..> ExitScene : empilha
+    PlayScene ..> PauseScene : empilha
+    PlayScene ..> GameOverScene : cria
+    GameOverScene ..> InitialsScene : cria
+    GameOverScene ..> HighScoresScene : cria
+    InitialsScene ..> HighScoresScene : cria
+    PauseScene ..> TitleScene : cria
+    SoundEffects --> AudioService : audio
+    SoundEffects ..> EventBus : assina
+    Popups ..> EventBus : assina
+    Session ..> EventBus : assina / publica
+    World *-- Maze : maze
+    World *-- CoachMan : coachman
+    World *-- Ghost : ghosts [4]
+    World *-- ModeScheduler : modes
+    World *-- GhostHouse : house
+    World *-- Bonus : bonus
+    World --> LevelSpec : spec
+    World --> EventBus : publica
+    World ..> EntityFactory : usa
+    World ..|> GhostWorld
+    Maze --> MazeDefinition : definition
+    GhostHouse --> Ghost : libera
+    GhostHouse --> LevelSpec : spec
+    Actor --> Maze : maze
+    Actor --> Direction : direction
+    Ghost o-- GhostState : state
+    Ghost o-- TargetingStrategy : strategy
+    Ghost --> GhostWorld : world
+    ChaseState ..> TargetingStrategy : chase_target()
+    TargetingStrategy ..> TargetContext
+    EntityFactory ..> CoachMan : cria
+    EntityFactory ..> Ghost : cria
+    EntityFactory --> GhostProfile : PROFILES
