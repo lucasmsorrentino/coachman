@@ -1,0 +1,194 @@
+classDiagram
+    direction TB
+    namespace aplicacao {
+        class App {
+            <<Composition Root>>
+            +screen
+            +assets: AssetLibrary
+            +audio: AudioService
+            +scores: HighScoreRepository
+            +input: InputHandler
+            +scenes: SceneStack
+            +clock: Clock
+            +joysticks: list
+            +loop: GameLoop
+            +run()
+            +quit()
+            +process_input()
+            +update(dt)
+            +render()
+        }
+    }
+    namespace core {
+        class GameLoop {
+            <<Game Loop>>
+            +step: float
+            +process_input: Callable
+            +update: Callable
+            +render: Callable
+            +tick: Callable
+            +running: bool
+            +run()
+            +stop()
+        }
+        class SceneStack {
+            <<State · pilha>>
+            +top: Scene?
+            +push(scene)
+            +pop() Scene?
+            +replace(scene)
+            +update(dt)
+            +draw(surface)
+        }
+        class Scene {
+            <<State>>
+            +app: App
+            +enter()
+            +exit()
+            +resume()
+            +update(dt)
+            +draw(surface)
+        }
+        class CommandTarget {
+            <<Command · Receiver>>
+            +on_direction(direction)
+            +on_confirm()
+            +on_back()
+            +on_pause()
+            +on_toggle_debug()
+            +on_text(char)
+            +on_erase()
+        }
+        class Command {
+            <<abstract · Command>>
+            +execute(target)*
+        }
+        class DirectionCommand {
+            +direction: Direction
+            +execute(target)
+        }
+        class ConfirmCommand {
+            +execute(target)
+        }
+        class BackCommand {
+            +execute(target)
+        }
+        class PauseCommand {
+            +execute(target)
+        }
+        class ToggleDebugCommand {
+            +execute(target)
+        }
+        class TextCommand {
+            +char: str
+            +execute(target)
+        }
+        class EraseCommand {
+            +execute(target)
+        }
+        class AppCommand {
+            +action: str
+            +execute(target)
+        }
+        class InputHandler {
+            <<Command · Invoker>>
+            +keymap
+            +text_mode: bool
+            +translate(event) list~Command~
+        }
+        class AssetLibrary {
+            <<Flyweight>>
+            +base_dir: Path
+            +path(relative) str
+            +load_atlas(image, index)
+            +frame(name) Surface
+            +frames(prefix) list~Surface~
+            +image(relative) Surface
+            +font(size) Font
+            +text(text, size, color) Surface
+        }
+        class AudioService {
+            <<abstract · Facade>>
+            +play_music(name, loops)*
+            +stop_music()*
+            +pause_music()
+            +resume_music()
+            +play_sfx(name)*
+            +set_muted(muted)*
+            +toggle_mute() bool
+        }
+        class PygameAudio {
+            <<Singleton>>
+            +base_dir: Path
+            +current: str?
+            +sounds: dict~str, Sound~
+            +play_music(name, loops)
+            +stop_music()
+            +pause_music()
+            +resume_music()
+            +play_sfx(name)
+            +set_muted(muted)
+        }
+        class NullAudio {
+            <<Null Object>>
+            +played: list~str~
+            +play_music(name, loops)
+            +stop_music()
+            +play_sfx(name)
+            +set_muted(muted)
+        }
+    }
+    namespace persistence {
+        class HighScoreRepository {
+            <<abstract · Repository>>
+            +top(limit)* list~ScoreEntry~
+            +add(entry)*
+            +best() int
+            +qualifies(score) bool
+        }
+        class InMemoryHighScoreRepository {
+            +top(limit) list~ScoreEntry~
+            +add(entry)
+        }
+        class SqliteHighScoreRepository {
+            +top(limit) list~ScoreEntry~
+            +add(entry)
+        }
+        class BrowserHighScoreRepository {
+            +top(limit) list~ScoreEntry~
+            +add(entry)
+        }
+        class ScoreEntry {
+            <<dataclass>>
+            +initials: str
+            +score: int
+            +level: int
+            +day: str
+            +new(initials, score, level)$ ScoreEntry
+        }
+    }
+    CommandTarget <|-- Scene
+    Command <|-- DirectionCommand
+    Command <|-- ConfirmCommand
+    Command <|-- BackCommand
+    Command <|-- PauseCommand
+    Command <|-- ToggleDebugCommand
+    Command <|-- TextCommand
+    Command <|-- EraseCommand
+    Command <|-- AppCommand
+    AudioService <|-- PygameAudio
+    AudioService <|-- NullAudio
+    HighScoreRepository <|-- InMemoryHighScoreRepository
+    HighScoreRepository <|-- SqliteHighScoreRepository
+    HighScoreRepository <|-- BrowserHighScoreRepository
+    App *-- GameLoop : loop
+    App *-- SceneStack : scenes
+    App *-- InputHandler : input
+    App *-- AssetLibrary : assets
+    App o-- AudioService : audio
+    App o-- HighScoreRepository : scores
+    SceneStack o-- Scene : pilha
+    Scene --> App : app
+    InputHandler ..> Command : traduz eventos em
+    Command ..> CommandTarget : execute(alvo)
+    HighScoreRepository ..> ScoreEntry

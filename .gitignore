@@ -7,3 +7,5 @@ __pycache__/
 # saída do pygbag (gerada pelo GitHub Actions)
 coachman/build/
 *.db
+node_modules/
+package-lock.json

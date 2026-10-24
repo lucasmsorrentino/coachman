@@ -1,0 +1,263 @@
+classDiagram
+    direction TB
+    namespace scenes {
+        class PlayScene {
+            +rng: Random
+            +bus: EventBus
+            +session: Session
+            +sfx: SoundEffects
+            +popups: Popups
+            +debug: bool
+            +frame: int
+            +update(dt)
+            +on_direction(direction)
+            +on_confirm()
+            +on_pause()
+            +on_focus_lost()
+            +on_toggle_debug()
+            +draw(surface)
+        }
+        class Phase {
+            <<enumeration>>
+            INTRO
+            READY
+            PLAYING
+            DYING
+            CLEARED
+            GAME_OVER
+        }
+        class SoundEffects {
+            <<Observer · assinante>>
+            +audio: AudioService
+        }
+        class Popups {
+            <<Observer · assinante>>
+            +items: list~list~
+            +update(dt)
+            +clear()
+        }
+    }
+    namespace world {
+        class World {
+            <<Mediator>>
+            +level: int
+            +bus: EventBus
+            +rng: Random
+            +spec: LevelSpec
+            +maze: Maze
+            +coachman: CoachMan
+            +ghosts: list~Ghost~
+            +by_name: dict
+            +modes: ModeScheduler
+            +house: GhostHouse
+            +bonus: Bonus
+            +bonus_thresholds_hit: set~int~
+            +ghost_combo: int
+            +elroy_suspended: bool
+            +pause_frames: int
+            +eaten_ghost: tuple~Ghost, int~?
+            +caught_by: Ghost?
+            +cleared: bool
+            +frame: int
+            +target_context(ghost) TargetContext
+            +global_mode_state() GhostState
+            +elroy_level(ghost) int
+            +ghost_speed(ghost) float
+            +update(dt)
+            +is_edible(ghost)$ bool
+            +is_deadly(ghost)$ bool
+            +restart_after_death()
+        }
+        class Maze {
+            <<dataclass>>
+            +definition: MazeDefinition
+            +cols: int
+            +rows: int
+            +walls: set~Tile~
+            +doors: set~Tile~
+            +dots: set~Tile~
+            +energizers: dict~Tile, int~
+            +tunnel_tiles: set~Tile~
+            +total_food: int
+            +food_left: int
+            +food_eaten: int
+            +door_row: int
+            +house_center_x: float
+            +house_exit_y: float
+            +house_inside_y: float
+            +house_exit_tiles: set~Tile~
+            +from_definition(definition)$ Maze
+            +wrap_col(col) int
+            +is_wall(col, row) bool
+            +is_door(col, row) bool
+            +is_tunnel(col, row) bool
+            +pacman_can_enter(col, row) bool
+            +ghost_can_enter(col, row) bool
+            +exits(tile) list~Direction~
+            +eat(tile) str?
+            +house_slot_x(slot) float
+        }
+        class MazeDefinition {
+            <<dataclass>>
+            +name: str
+            +subtitle: str
+            +layout: tuple~str, ...~
+            +wall_color: tuple~int, int, int~
+            +no_up_tiles: tuple~Tile, ...~
+            +pacman_start: tuple~float, float~
+            +bonus_position: tuple~float, float~
+        }
+        class Bonus {
+            +x: float
+            +y: float
+            +time_left: float
+            +active: bool
+            +spawn(seconds)
+            +hide()
+            +update(dt)
+        }
+    }
+    namespace systems {
+        class ModeScheduler {
+            +durations: tuple~float, ...~
+            +index: int
+            +elapsed: float
+            +fright_left: float
+            +fright_total: float
+            +fright_flashes: int
+            +mode: str
+            +time_left: float
+            +frightened: bool
+            +flashing: bool
+            +start_fright(seconds, flashes)
+            +update(dt) list~str~
+        }
+        class GhostHouse {
+            +spec: LevelSpec
+            +ghosts: dict
+            +counters: dict
+            +use_global: bool
+            +global_counter: int
+            +idle: float
+            +preferred() Ghost?
+            +on_life_lost()
+            +on_dot_eaten()
+            +update(dt)
+        }
+        class Session {
+            <<Observer · assinante>>
+            +bus: EventBus
+            +score: int
+            +high_score: int
+            +lives: int
+            +level: int
+            +extra_life_awarded: bool
+            +add_points(points)
+            +lose_life() bool
+        }
+    }
+    namespace aplicacao {
+        class LevelSpec {
+            <<dataclass>>
+            +level: int
+            +bonus_points: int
+            +pac_speed: float
+            +pac_fright_speed: float
+            +ghost_speed: float
+            +ghost_tunnel_speed: float
+            +ghost_fright_speed: float
+            +elroy1_dots: int
+            +elroy1_speed: float
+            +elroy2_dots: int
+            +elroy2_speed: float
+            +fright_time: float
+            +fright_flashes: int
+            +mode_durations: tuple~float, ...~
+            +dot_limits: dict~str, int~
+            +house_idle_limit: float
+        }
+    }
+    namespace core {
+        class EventBus {
+            <<Observer · Subject>>
+            +subscribe(event_type, handler) Callable
+            +publish(event)
+            +clear()
+        }
+        class DotEaten {
+            <<event>>
+            +tile: tuple~int, int~
+            +food_left: int
+        }
+        class EnergizerEaten {
+            <<event>>
+            +tile: tuple~int, int~
+            +food_left: int
+        }
+        class GhostEaten {
+            <<event>>
+            +ghost: str
+            +points: int
+            +position: tuple~float, float~
+        }
+        class CoachManCaught {
+            <<event>>
+            +ghost: str
+        }
+        class BonusSpawned {
+            <<event>>
+            +position: tuple~float, float~
+        }
+        class BonusEaten {
+            <<event>>
+            +points: int
+            +position: tuple~float, float~
+        }
+        class ModeChanged {
+            <<event>>
+            +mode: str
+        }
+        class FrightStarted {
+            <<event>>
+            +seconds: float
+        }
+        class FrightEnded {
+            <<event>>
+        }
+        class ExtraLife {
+            <<event>>
+            +lives: int
+        }
+        class LevelCleared {
+            <<event>>
+            +level: int
+        }
+        class AudioService {
+            <<abstract · Facade>>
+            +play_music(name, loops)*
+            +stop_music()*
+            +pause_music()
+            +resume_music()
+            +play_sfx(name)*
+            +set_muted(muted)*
+            +toggle_mute() bool
+        }
+    }
+    PlayScene *-- World : world
+    PlayScene *-- Session : session
+    PlayScene *-- EventBus : bus
+    PlayScene *-- SoundEffects : sfx
+    PlayScene *-- Popups : popups
+    PlayScene --> Phase : phase
+    SoundEffects --> AudioService : audio
+    SoundEffects ..> EventBus : assina
+    Popups ..> EventBus : assina
+    Session ..> EventBus : assina / publica
+    World *-- Maze : maze
+    World *-- ModeScheduler : modes
+    World *-- GhostHouse : house
+    World *-- Bonus : bonus
+    World --> LevelSpec : spec
+    World --> EventBus : publica
+    Maze --> MazeDefinition : definition
+    GhostHouse --> LevelSpec : spec

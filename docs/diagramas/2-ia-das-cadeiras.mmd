@@ -1,0 +1,214 @@
+classDiagram
+    direction TB
+    namespace actors {
+        class Actor {
+            <<abstract · Template Method>>
+            +maze: Maze
+            +x: float
+            +y: float
+            +direction: Direction
+            +freeze: int
+            +moved: float
+            +tile: Tile
+            +maze_tile: Tile
+            +place(x, y, direction)
+            +update()
+            +speed()* float
+            +choose_direction_at_center()* Direction?
+            +before_move()
+            +after_move()
+            +move(distance)
+        }
+        class CoachMan {
+            +wanted: Direction?
+            +speed_factor: float
+            +anim_frame: int
+            +reset(x, y)
+            +steer(direction)
+            +speed() float
+            +before_move()
+            +choose_direction_at_center() Direction?
+            +after_move()
+        }
+        class Ghost {
+            <<Context de State e Strategy>>
+            +name: str
+            +world: GhostWorld
+            +strategy: TargetingStrategy
+            +scatter_tile: Tile
+            +home_slot: int
+            +starts_outside: bool
+            +state: GhostState
+            +frightened: bool
+            +exit_right: bool
+            +target: Tile?
+            +spin: float
+            +home_x: float
+            +in_house: bool
+            +roaming: bool
+            +spin_frame: int
+            +reset()
+            +change_state(state)
+            +release()
+            +revive()
+            +reverse()
+            +update()
+            +move_in_maze()
+            +speed() float
+            +choose_direction_at_center() Direction?
+        }
+        class GhostWorld {
+            <<interface>>
+            +target_context(ghost) TargetContext
+            +global_mode_state() GhostState
+            +elroy_level(ghost) int
+            +ghost_speed(ghost) float
+        }
+        class GhostState {
+            <<abstract · State>>
+            +enter(ghost)
+            +update(ghost)
+            +speed(ghost)* float
+            +choose_direction(ghost) Direction?
+        }
+        class ScatterState {
+            +speed(ghost) float
+            +target(ghost) Tile
+            +choose_direction(ghost) Direction
+        }
+        class ChaseState {
+            +target(ghost) Tile
+        }
+        class FrightenedState {
+            +speed(ghost) float
+            +choose_direction(ghost) Direction
+        }
+        class EatenState {
+            +speed(ghost) float
+            +choose_direction(ghost) Direction?
+        }
+        class _HouseMovement {
+            +step_towards(ghost, x, y, speed) bool
+        }
+        class InHouseState {
+            +speed(ghost) float
+            +update(ghost)
+        }
+        class LeavingHouseState {
+            +speed(ghost) float
+            +update(ghost)
+        }
+        class EnteringHouseState {
+            +speed(ghost) float
+            +update(ghost)
+        }
+        class TargetingStrategy {
+            <<abstract · Strategy>>
+            +chase_target(ctx)* Tile
+        }
+        class ShadowTargeting {
+            +chase_target(ctx) Tile
+        }
+        class AmbushTargeting {
+            +chase_target(ctx) Tile
+        }
+        class WhimsicalTargeting {
+            +chase_target(ctx) Tile
+        }
+        class PokeyTargeting {
+            +chase_target(ctx) Tile
+        }
+        class TargetContext {
+            <<dataclass>>
+            +pac_tile: Tile
+            +pac_direction: Direction
+            +ghost_tile: Tile
+            +blinky_tile: Tile
+            +scatter_tile: Tile
+        }
+        class EntityFactory {
+            <<Factory>>
+            +maze: Maze
+            +create_coachman() CoachMan
+            +create_ghosts(world) list~Ghost~
+        }
+        class GhostProfile {
+            <<dataclass>>
+            +name: str
+            +strategy: type~TargetingStrategy~
+            +corner: str
+            +home_slot: int
+            +starts_outside: bool
+        }
+    }
+    namespace world {
+        class World {
+            <<Mediator>>
+            +level: int
+            +bus: EventBus
+            +rng: Random
+            +spec: LevelSpec
+            +maze: Maze
+            +coachman: CoachMan
+            +ghosts: list~Ghost~
+            +by_name: dict
+            +modes: ModeScheduler
+            +house: GhostHouse
+            +bonus: Bonus
+            +bonus_thresholds_hit: set~int~
+            +ghost_combo: int
+            +elroy_suspended: bool
+            +pause_frames: int
+            +eaten_ghost: tuple~Ghost, int~?
+            +caught_by: Ghost?
+            +cleared: bool
+            +frame: int
+            +target_context(ghost) TargetContext
+            +global_mode_state() GhostState
+            +elroy_level(ghost) int
+            +ghost_speed(ghost) float
+            +update(dt)
+            +is_edible(ghost)$ bool
+            +is_deadly(ghost)$ bool
+            +restart_after_death()
+        }
+        class Direction {
+            <<enumeration>>
+            UP
+            LEFT
+            DOWN
+            RIGHT
+            +dx: int
+            +dy: int
+            +opposite: Direction
+            +is_horizontal: bool
+            +is_perpendicular_to(other) bool
+        }
+    }
+    Actor <|-- CoachMan
+    Actor <|-- Ghost
+    GhostState <|-- ScatterState
+    ScatterState <|-- ChaseState
+    GhostState <|-- FrightenedState
+    GhostState <|-- EatenState
+    GhostState <|-- _HouseMovement
+    _HouseMovement <|-- InHouseState
+    _HouseMovement <|-- LeavingHouseState
+    _HouseMovement <|-- EnteringHouseState
+    TargetingStrategy <|-- ShadowTargeting
+    TargetingStrategy <|-- AmbushTargeting
+    TargetingStrategy <|-- WhimsicalTargeting
+    TargetingStrategy <|-- PokeyTargeting
+    World *-- CoachMan : coachman
+    World *-- Ghost : ghosts [4]
+    World ..> EntityFactory : usa
+    World ..|> GhostWorld
+    Actor --> Direction : direction
+    Ghost o-- GhostState : state
+    Ghost o-- TargetingStrategy : strategy
+    Ghost --> GhostWorld : world
+    ChaseState ..> TargetingStrategy : chase_target()
+    TargetingStrategy ..> TargetContext
+    EntityFactory ..> CoachMan : cria
+    EntityFactory ..> Ghost : cria
+    EntityFactory --> GhostProfile : PROFILES
